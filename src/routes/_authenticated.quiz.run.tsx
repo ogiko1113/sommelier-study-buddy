@@ -99,19 +99,28 @@ function QuizRunPage() {
     });
 
     // Update question counters + SRS entry on first wrong
-    const updates: Record<string, unknown> = {};
     if (isCorrect) {
-      updates.correct_count = (question.correct_count ?? 0) + 1;
+      await supabase
+        .from("questions")
+        .update({ correct_count: (question.correct_count ?? 0) + 1 })
+        .eq("id", question.id);
+    } else if (question.srs_stage === 0) {
+      const next = new Date();
+      next.setDate(next.getDate() + 3);
+      await supabase
+        .from("questions")
+        .update({
+          wrong_count: (question.wrong_count ?? 0) + 1,
+          srs_stage: 1,
+          next_review_at: next.toISOString(),
+        })
+        .eq("id", question.id);
     } else {
-      updates.wrong_count = (question.wrong_count ?? 0) + 1;
-      if (question.srs_stage === 0) {
-        const next = new Date();
-        next.setDate(next.getDate() + 3);
-        updates.srs_stage = 1;
-        updates.next_review_at = next.toISOString();
-      }
+      await supabase
+        .from("questions")
+        .update({ wrong_count: (question.wrong_count ?? 0) + 1 })
+        .eq("id", question.id);
     }
-    await supabase.from("questions").update(updates).eq("id", question.id);
 
     // Update session
     const newAnswer: AnswerRecord = {
