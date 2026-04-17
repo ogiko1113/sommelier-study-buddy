@@ -1,9 +1,14 @@
 // sessionStorage helpers for active quiz / SRS sessions
+import type { SrsRating } from "@/lib/srs";
 
 export interface AnswerRecord {
   questionId: string;
   selectedIndex: number;
   isCorrect: boolean;
+}
+
+export interface SrsAnswerRecord extends AnswerRecord {
+  rating: SrsRating;
 }
 
 export interface ActiveQuiz {
@@ -17,7 +22,7 @@ export interface ActiveQuiz {
 export interface ActiveSrs {
   questionIds: string[];
   currentIndex: number;
-  answers: AnswerRecord[];
+  answers: SrsAnswerRecord[];
   mode: "srs_review";
   startedAt: string;
 }

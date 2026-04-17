@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { srsSession, type AnswerRecord } from "@/lib/quiz-session";
+import { srsSession, type SrsAnswerRecord } from "@/lib/quiz-session";
 import { applySrsRating, type SrsRating } from "@/lib/srs";
 import { Star } from "lucide-react";
 
@@ -32,32 +32,27 @@ function SrsRunPage() {
   const [revealed, setRevealed] = useState(false);
   const [starred, setStarred] = useState(false);
 
-  // Build queue if no active session
+  // Build queue if no active session — strict spec query, limit 20
   useEffect(() => {
     if (session || !user) return;
     let cancelled = false;
     (async () => {
       const nowIso = new Date().toISOString();
-      const { data: dueRows, error: e1 } = await supabase
+      const { data, error } = await supabase
         .from("questions")
-        .select("id, next_review_at")
+        .select("id")
+        .not("next_review_at", "is", null)
         .lte("next_review_at", nowIso)
-        .order("next_review_at", { ascending: true });
-      const { data: starRows, error: e2 } = await supabase
-        .from("questions")
-        .select("id, last_reviewed_at, next_review_at")
-        .eq("is_starred", true)
-        .order("last_reviewed_at", { ascending: true, nullsFirst: true });
+        .lt("srs_stage", 5)
+        .order("next_review_at", { ascending: true })
+        .limit(20);
       if (cancelled) return;
-      if (e1 || e2) {
-        console.error("srs queue error", e1, e2);
+      if (error) {
+        console.error("srs queue error", error);
         navigate({ to: "/" });
         return;
       }
-      const dueIds = (dueRows ?? []).map((r) => r.id);
-      const dueSet = new Set(dueIds);
-      const starredOnly = (starRows ?? []).filter((r) => !dueSet.has(r.id)).map((r) => r.id);
-      const queue = [...dueIds, ...starredOnly];
+      const queue = (data ?? []).map((r) => r.id);
       if (queue.length === 0) {
         navigate({ to: "/" });
         return;
@@ -65,7 +60,7 @@ function SrsRunPage() {
       const newSession = {
         questionIds: queue,
         currentIndex: 0,
-        answers: [] as AnswerRecord[],
+        answers: [] as SrsAnswerRecord[],
         mode: "srs_review" as const,
         startedAt: new Date().toISOString(),
       };
@@ -137,7 +132,8 @@ function SrsRunPage() {
 
   const onRate = async (rating: SrsRating) => {
     if (!question || !user || selected === null) return;
-    const isCorrect = selected === question.answer_index;
+    // Spec: is_correct = true ONLY when rating is "perfect"
+    const isCorrect = rating === "perfect";
 
     const update = applySrsRating(question.srs_stage, rating);
 
@@ -160,10 +156,11 @@ function SrsRunPage() {
       })
       .eq("id", question.id);
 
-    const newAnswer: AnswerRecord = {
+    const newAnswer: SrsAnswerRecord = {
       questionId: question.id,
       selectedIndex: selected,
       isCorrect,
+      rating,
     };
     const updated = {
       ...session,
