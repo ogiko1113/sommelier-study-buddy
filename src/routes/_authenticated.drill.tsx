@@ -70,10 +70,11 @@ function DrillPage() {
         subcategory = s ?? null;
       }
 
-      let q = supabase
+      let q = (supabase as any)
         .from("questions")
         .select("id")
         .overlaps("tags", tags)
+        .eq("is_archived", false)
         .limit(50);
 
       if (category) q = q.eq("category", category);

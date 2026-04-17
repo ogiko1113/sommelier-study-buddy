@@ -12,12 +12,16 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedEditorRouteImport } from './routes/_authenticated.editor'
 import { Route as AuthenticatedDrillRouteImport } from './routes/_authenticated.drill'
 import { Route as AuthenticatedSrsSummaryRouteImport } from './routes/_authenticated.srs.summary'
 import { Route as AuthenticatedSrsRunRouteImport } from './routes/_authenticated.srs.run'
 import { Route as AuthenticatedQuizSummaryRouteImport } from './routes/_authenticated.quiz.summary'
 import { Route as AuthenticatedQuizSetupRouteImport } from './routes/_authenticated.quiz.setup'
 import { Route as AuthenticatedQuizRunRouteImport } from './routes/_authenticated.quiz.run'
+import { Route as AuthenticatedEditorNewRouteImport } from './routes/_authenticated.editor.new'
+import { Route as AuthenticatedEditorImportRouteImport } from './routes/_authenticated.editor.import'
+import { Route as AuthenticatedEditorIdRouteImport } from './routes/_authenticated.editor.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -31,6 +35,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedEditorRoute = AuthenticatedEditorRouteImport.update({
+  id: '/editor',
+  path: '/editor',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDrillRoute = AuthenticatedDrillRouteImport.update({
@@ -64,11 +73,31 @@ const AuthenticatedQuizRunRoute = AuthenticatedQuizRunRouteImport.update({
   path: '/quiz/run',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedEditorNewRoute = AuthenticatedEditorNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AuthenticatedEditorRoute,
+} as any)
+const AuthenticatedEditorImportRoute =
+  AuthenticatedEditorImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AuthenticatedEditorRoute,
+  } as any)
+const AuthenticatedEditorIdRoute = AuthenticatedEditorIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedEditorRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/drill': typeof AuthenticatedDrillRoute
+  '/editor': typeof AuthenticatedEditorRouteWithChildren
+  '/editor/$id': typeof AuthenticatedEditorIdRoute
+  '/editor/import': typeof AuthenticatedEditorImportRoute
+  '/editor/new': typeof AuthenticatedEditorNewRoute
   '/quiz/run': typeof AuthenticatedQuizRunRoute
   '/quiz/setup': typeof AuthenticatedQuizSetupRoute
   '/quiz/summary': typeof AuthenticatedQuizSummaryRoute
@@ -78,7 +107,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/drill': typeof AuthenticatedDrillRoute
+  '/editor': typeof AuthenticatedEditorRouteWithChildren
   '/': typeof AuthenticatedIndexRoute
+  '/editor/$id': typeof AuthenticatedEditorIdRoute
+  '/editor/import': typeof AuthenticatedEditorImportRoute
+  '/editor/new': typeof AuthenticatedEditorNewRoute
   '/quiz/run': typeof AuthenticatedQuizRunRoute
   '/quiz/setup': typeof AuthenticatedQuizSetupRoute
   '/quiz/summary': typeof AuthenticatedQuizSummaryRoute
@@ -90,7 +123,11 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/drill': typeof AuthenticatedDrillRoute
+  '/_authenticated/editor': typeof AuthenticatedEditorRouteWithChildren
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/editor/$id': typeof AuthenticatedEditorIdRoute
+  '/_authenticated/editor/import': typeof AuthenticatedEditorImportRoute
+  '/_authenticated/editor/new': typeof AuthenticatedEditorNewRoute
   '/_authenticated/quiz/run': typeof AuthenticatedQuizRunRoute
   '/_authenticated/quiz/setup': typeof AuthenticatedQuizSetupRoute
   '/_authenticated/quiz/summary': typeof AuthenticatedQuizSummaryRoute
@@ -103,6 +140,10 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/drill'
+    | '/editor'
+    | '/editor/$id'
+    | '/editor/import'
+    | '/editor/new'
     | '/quiz/run'
     | '/quiz/setup'
     | '/quiz/summary'
@@ -112,7 +153,11 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/drill'
+    | '/editor'
     | '/'
+    | '/editor/$id'
+    | '/editor/import'
+    | '/editor/new'
     | '/quiz/run'
     | '/quiz/setup'
     | '/quiz/summary'
@@ -123,7 +168,11 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/_authenticated/drill'
+    | '/_authenticated/editor'
     | '/_authenticated/'
+    | '/_authenticated/editor/$id'
+    | '/_authenticated/editor/import'
+    | '/_authenticated/editor/new'
     | '/_authenticated/quiz/run'
     | '/_authenticated/quiz/setup'
     | '/_authenticated/quiz/summary'
@@ -157,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/editor': {
+      id: '/_authenticated/editor'
+      path: '/editor'
+      fullPath: '/editor'
+      preLoaderRoute: typeof AuthenticatedEditorRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/drill': {
@@ -201,11 +257,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuizRunRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/editor/new': {
+      id: '/_authenticated/editor/new'
+      path: '/new'
+      fullPath: '/editor/new'
+      preLoaderRoute: typeof AuthenticatedEditorNewRouteImport
+      parentRoute: typeof AuthenticatedEditorRoute
+    }
+    '/_authenticated/editor/import': {
+      id: '/_authenticated/editor/import'
+      path: '/import'
+      fullPath: '/editor/import'
+      preLoaderRoute: typeof AuthenticatedEditorImportRouteImport
+      parentRoute: typeof AuthenticatedEditorRoute
+    }
+    '/_authenticated/editor/$id': {
+      id: '/_authenticated/editor/$id'
+      path: '/$id'
+      fullPath: '/editor/$id'
+      preLoaderRoute: typeof AuthenticatedEditorIdRouteImport
+      parentRoute: typeof AuthenticatedEditorRoute
+    }
   }
 }
 
+interface AuthenticatedEditorRouteChildren {
+  AuthenticatedEditorIdRoute: typeof AuthenticatedEditorIdRoute
+  AuthenticatedEditorImportRoute: typeof AuthenticatedEditorImportRoute
+  AuthenticatedEditorNewRoute: typeof AuthenticatedEditorNewRoute
+}
+
+const AuthenticatedEditorRouteChildren: AuthenticatedEditorRouteChildren = {
+  AuthenticatedEditorIdRoute: AuthenticatedEditorIdRoute,
+  AuthenticatedEditorImportRoute: AuthenticatedEditorImportRoute,
+  AuthenticatedEditorNewRoute: AuthenticatedEditorNewRoute,
+}
+
+const AuthenticatedEditorRouteWithChildren =
+  AuthenticatedEditorRoute._addFileChildren(AuthenticatedEditorRouteChildren)
+
 interface AuthenticatedRouteChildren {
   AuthenticatedDrillRoute: typeof AuthenticatedDrillRoute
+  AuthenticatedEditorRoute: typeof AuthenticatedEditorRouteWithChildren
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedQuizRunRoute: typeof AuthenticatedQuizRunRoute
   AuthenticatedQuizSetupRoute: typeof AuthenticatedQuizSetupRoute
@@ -216,6 +309,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDrillRoute: AuthenticatedDrillRoute,
+  AuthenticatedEditorRoute: AuthenticatedEditorRouteWithChildren,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedQuizRunRoute: AuthenticatedQuizRunRoute,
   AuthenticatedQuizSetupRoute: AuthenticatedQuizSetupRoute,

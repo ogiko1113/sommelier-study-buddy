@@ -31,10 +31,11 @@ function QuizSummaryPage() {
       return;
     }
     (async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("questions")
         .select("id, question_text")
-        .in("id", wrongIds);
+        .in("id", wrongIds)
+        .eq("is_archived", false);
       setWrongQuestions(data ?? []);
       setLoaded(true);
     })();

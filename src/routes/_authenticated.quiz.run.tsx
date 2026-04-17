@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { quizSession, type AnswerRecord } from "@/lib/quiz-session";
 import { Star } from "lucide-react";
+import { FlagButton } from "@/components/quiz/FlagButton";
 
 export const Route = createFileRoute("/_authenticated/quiz/run")({
   component: QuizRunPage,
@@ -179,15 +180,18 @@ function QuizRunPage() {
         <span className="text-sm font-medium text-muted-foreground tabular-nums">
           {progress} / {total}
         </span>
-        <button
-          onClick={onToggleStar}
-          aria-label="スター切り替え"
-          className="p-2"
-        >
-          <Star
-            className={`h-6 w-6 ${starred ? "fill-primary text-primary" : "text-muted-foreground"}`}
-          />
-        </button>
+        <div className="flex items-center gap-1">
+          <FlagButton questionId={question.id} />
+          <button
+            onClick={onToggleStar}
+            aria-label="スター切り替え"
+            className="p-2"
+          >
+            <Star
+              className={`h-6 w-6 ${starred ? "fill-primary text-primary" : "text-muted-foreground"}`}
+            />
+          </button>
+        </div>
       </header>
 
       <main className="mx-auto max-w-md space-y-6 px-5 py-6">

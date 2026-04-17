@@ -58,10 +58,11 @@ function QuizSetupPage() {
     setError(null);
     setSubmitting(true);
 
-    let q = supabase
+    let q = (supabase as any)
       .from("questions")
       .select("id, correct_count, wrong_count")
       .eq("category", category)
+      .eq("is_archived", false)
       .in("difficulty", difficulties);
 
     if (subcats.length > 0 && subcategory) {
