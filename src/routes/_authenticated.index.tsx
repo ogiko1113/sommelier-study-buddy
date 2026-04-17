@@ -43,7 +43,9 @@ function HomePage() {
       const { count, error } = await supabase
         .from("questions")
         .select("id", { count: "exact", head: true })
-        .or(`next_review_at.lte.${nowIso},is_starred.eq.true`);
+        .not("next_review_at", "is", null)
+        .lte("next_review_at", nowIso)
+        .lt("srs_stage", 5);
       if (!cancelled) {
         if (error) {
           console.error("due count error", error);
