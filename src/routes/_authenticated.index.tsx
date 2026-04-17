@@ -14,6 +14,12 @@ type TagStat = {
   correct_rate: number | null;
 };
 
+type CategoryStat = {
+  category: string;
+  total_answers: number;
+  correct_rate: number | null;
+};
+
 function rateColorClass(rate: number) {
   if (rate < 0.6) return "bg-red-500/15 border-red-500/40";
   if (rate < 0.75) return "bg-amber-500/15 border-amber-500/40";
