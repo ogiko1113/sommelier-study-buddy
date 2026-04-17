@@ -14,7 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      answer_logs: {
+        Row: {
+          answered_at: string
+          id: string
+          is_correct: boolean
+          mode: string
+          question_id: string
+          selected_index: number | null
+          selected_text: string | null
+          srs_rating: string | null
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          id?: string
+          is_correct: boolean
+          mode?: string
+          question_id: string
+          selected_index?: number | null
+          selected_text?: string | null
+          srs_rating?: string | null
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          mode?: string
+          question_id?: string
+          selected_index?: number | null
+          selected_text?: string | null
+          srs_rating?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "answer_logs_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          answer_index: number
+          answer_text: string | null
+          category: string
+          correct_count: number
+          created_at: string
+          difficulty: number
+          explanation: string
+          explanation_depth: string
+          id: string
+          is_starred: boolean
+          last_reviewed_at: string | null
+          next_review_at: string | null
+          options: Json
+          question_text: string
+          question_type: string
+          srs_stage: number
+          subcategory: string | null
+          tags: string[]
+          updated_at: string
+          user_id: string
+          wrong_count: number
+        }
+        Insert: {
+          answer_index: number
+          answer_text?: string | null
+          category: string
+          correct_count?: number
+          created_at?: string
+          difficulty?: number
+          explanation?: string
+          explanation_depth?: string
+          id?: string
+          is_starred?: boolean
+          last_reviewed_at?: string | null
+          next_review_at?: string | null
+          options: Json
+          question_text: string
+          question_type?: string
+          srs_stage?: number
+          subcategory?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id: string
+          wrong_count?: number
+        }
+        Update: {
+          answer_index?: number
+          answer_text?: string | null
+          category?: string
+          correct_count?: number
+          created_at?: string
+          difficulty?: number
+          explanation?: string
+          explanation_depth?: string
+          id?: string
+          is_starred?: boolean
+          last_reviewed_at?: string | null
+          next_review_at?: string | null
+          options?: Json
+          question_text?: string
+          question_type?: string
+          srs_stage?: number
+          subcategory?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id?: string
+          wrong_count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
