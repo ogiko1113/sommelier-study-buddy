@@ -9,60 +9,208 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedSrsSummaryRouteImport } from './routes/_authenticated.srs.summary'
+import { Route as AuthenticatedSrsRunRouteImport } from './routes/_authenticated.srs.run'
+import { Route as AuthenticatedQuizSummaryRouteImport } from './routes/_authenticated.quiz.summary'
+import { Route as AuthenticatedQuizSetupRouteImport } from './routes/_authenticated.quiz.setup'
+import { Route as AuthenticatedQuizRunRouteImport } from './routes/_authenticated.quiz.run'
 
-const IndexRoute = IndexRouteImport.update({
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSrsSummaryRoute = AuthenticatedSrsSummaryRouteImport.update({
+  id: '/srs/summary',
+  path: '/srs/summary',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSrsRunRoute = AuthenticatedSrsRunRouteImport.update({
+  id: '/srs/run',
+  path: '/srs/run',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedQuizSummaryRoute =
+  AuthenticatedQuizSummaryRouteImport.update({
+    id: '/quiz/summary',
+    path: '/quiz/summary',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedQuizSetupRoute = AuthenticatedQuizSetupRouteImport.update({
+  id: '/quiz/setup',
+  path: '/quiz/setup',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedQuizRunRoute = AuthenticatedQuizRunRouteImport.update({
+  id: '/quiz/run',
+  path: '/quiz/run',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/login': typeof LoginRoute
+  '/quiz/run': typeof AuthenticatedQuizRunRoute
+  '/quiz/setup': typeof AuthenticatedQuizSetupRoute
+  '/quiz/summary': typeof AuthenticatedQuizSummaryRoute
+  '/srs/run': typeof AuthenticatedSrsRunRoute
+  '/srs/summary': typeof AuthenticatedSrsSummaryRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/quiz/run': typeof AuthenticatedQuizRunRoute
+  '/quiz/setup': typeof AuthenticatedQuizSetupRoute
+  '/quiz/summary': typeof AuthenticatedQuizSummaryRoute
+  '/srs/run': typeof AuthenticatedSrsRunRoute
+  '/srs/summary': typeof AuthenticatedSrsSummaryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/quiz/run': typeof AuthenticatedQuizRunRoute
+  '/_authenticated/quiz/setup': typeof AuthenticatedQuizSetupRoute
+  '/_authenticated/quiz/summary': typeof AuthenticatedQuizSummaryRoute
+  '/_authenticated/srs/run': typeof AuthenticatedSrsRunRoute
+  '/_authenticated/srs/summary': typeof AuthenticatedSrsSummaryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/quiz/run'
+    | '/quiz/setup'
+    | '/quiz/summary'
+    | '/srs/run'
+    | '/srs/summary'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/login'
+    | '/'
+    | '/quiz/run'
+    | '/quiz/setup'
+    | '/quiz/summary'
+    | '/srs/run'
+    | '/srs/summary'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/'
+    | '/_authenticated/quiz/run'
+    | '/_authenticated/quiz/setup'
+    | '/_authenticated/quiz/summary'
+    | '/_authenticated/srs/run'
+    | '/_authenticated/srs/summary'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/srs/summary': {
+      id: '/_authenticated/srs/summary'
+      path: '/srs/summary'
+      fullPath: '/srs/summary'
+      preLoaderRoute: typeof AuthenticatedSrsSummaryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/srs/run': {
+      id: '/_authenticated/srs/run'
+      path: '/srs/run'
+      fullPath: '/srs/run'
+      preLoaderRoute: typeof AuthenticatedSrsRunRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/quiz/summary': {
+      id: '/_authenticated/quiz/summary'
+      path: '/quiz/summary'
+      fullPath: '/quiz/summary'
+      preLoaderRoute: typeof AuthenticatedQuizSummaryRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/quiz/setup': {
+      id: '/_authenticated/quiz/setup'
+      path: '/quiz/setup'
+      fullPath: '/quiz/setup'
+      preLoaderRoute: typeof AuthenticatedQuizSetupRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/quiz/run': {
+      id: '/_authenticated/quiz/run'
+      path: '/quiz/run'
+      fullPath: '/quiz/run'
+      preLoaderRoute: typeof AuthenticatedQuizRunRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedQuizRunRoute: typeof AuthenticatedQuizRunRoute
+  AuthenticatedQuizSetupRoute: typeof AuthenticatedQuizSetupRoute
+  AuthenticatedQuizSummaryRoute: typeof AuthenticatedQuizSummaryRoute
+  AuthenticatedSrsRunRoute: typeof AuthenticatedSrsRunRoute
+  AuthenticatedSrsSummaryRoute: typeof AuthenticatedSrsSummaryRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedQuizRunRoute: AuthenticatedQuizRunRoute,
+  AuthenticatedQuizSetupRoute: AuthenticatedQuizSetupRoute,
+  AuthenticatedQuizSummaryRoute: AuthenticatedQuizSummaryRoute,
+  AuthenticatedSrsRunRoute: AuthenticatedSrsRunRoute,
+  AuthenticatedSrsSummaryRoute: AuthenticatedSrsSummaryRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
