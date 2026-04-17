@@ -32,6 +32,8 @@ function HomePage() {
   const [dueCount, setDueCount] = useState<number | null>(null);
   const [tagStats, setTagStats] = useState<TagStat[] | null>(null);
   const [tagStatsError, setTagStatsError] = useState<string | null>(null);
+  const [categoryStats, setCategoryStats] = useState<CategoryStat[] | null>(null);
+  const [categoryStatsError, setCategoryStatsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
