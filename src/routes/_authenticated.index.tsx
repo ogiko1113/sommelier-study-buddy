@@ -124,19 +124,15 @@ function HomePage() {
       </header>
 
       <main className="mx-auto max-w-md space-y-6 px-5 py-8">
-        <Link
-          to="/srs/run"
-          className="block rounded-2xl border bg-card p-6 shadow-sm transition-colors hover:bg-accent"
-        >
-          <p className="text-sm font-medium text-muted-foreground">本日のSRS</p>
+        <div className="block rounded-2xl border bg-card p-6 shadow-sm">
+          <p className="text-sm font-medium text-muted-foreground">本日の復習</p>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-5xl font-bold text-primary tabular-nums">
               {dueCount ?? "—"}
             </span>
-            <span className="text-base text-muted-foreground">問</span>
+            <span className="text-base text-muted-foreground">問が復習待ち</span>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">復習待ち + スター付き</p>
-        </Link>
+        </div>
 
         <div className="space-y-3">
           <Button
@@ -153,18 +149,30 @@ function HomePage() {
           >
             <Link to="/drill">タグ横断演習</Link>
           </Button>
-          <Button
-            asChild
-            variant="outline"
-            disabled={dueCount === 0}
-            className="h-14 w-full text-base font-medium"
-          >
-            {dueCount === 0 ? (
-              <span className="opacity-50">SRS復習(なし)</span>
-            ) : (
-              <Link to="/srs/run">SRS復習</Link>
-            )}
-          </Button>
+          {dueCount === 0 ? (
+            <Button
+              variant="outline"
+              disabled
+              className="h-14 w-full text-base font-medium opacity-50"
+            >
+              本日の復習なし
+            </Button>
+          ) : (
+            <Button
+              asChild
+              variant="outline"
+              className="h-14 w-full text-base font-medium"
+            >
+              <Link to="/srs/run">
+                SRS復習を始める
+                {dueCount !== null && dueCount > 0 && (
+                  <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground tabular-nums">
+                    {dueCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
+          )}
         </div>
 
         <section className="space-y-3">
