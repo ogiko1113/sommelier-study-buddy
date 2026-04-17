@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { CATEGORIES, SUBCATEGORIES } from "@/constants/categories";
 import { TAGS } from "@/constants/tags";
 import { Button } from "@/components/ui/button";
