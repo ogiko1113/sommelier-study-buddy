@@ -54,7 +54,7 @@ function SrsRunPage() {
         navigate({ to: "/" });
         return;
       }
-      const queue = (data ?? []).map((r) => r.id);
+      const queue = ((data ?? []) as { id: string }[]).map((r) => r.id);
       if (queue.length === 0) {
         navigate({ to: "/" });
         return;

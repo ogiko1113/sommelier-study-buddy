@@ -40,7 +40,7 @@ function SrsSummaryPage() {
       }
       const ratingById = new Map(reviewItems.map((r) => [r.questionId, r.rating]));
       setReviewQuestions(
-        data.map((q) => ({
+        (data as { id: string; question_text: string }[]).map((q) => ({
           id: q.id,
           question_text: q.question_text,
           rating: ratingById.get(q.id) as "vague" | "unknown",
