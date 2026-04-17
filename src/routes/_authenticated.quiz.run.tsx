@@ -98,28 +98,32 @@ function QuizRunPage() {
       mode: "quiz",
     });
 
-    // Update question counters + SRS entry on first wrong
+    // Update question counters + auto-enqueue into SRS on first wrong
     if (isCorrect) {
       await supabase
         .from("questions")
         .update({ correct_count: (question.correct_count ?? 0) + 1 })
         .eq("id", question.id);
-    } else if (question.srs_stage === 0) {
-      const next = new Date();
-      next.setDate(next.getDate() + 3);
-      await supabase
-        .from("questions")
-        .update({
-          wrong_count: (question.wrong_count ?? 0) + 1,
-          srs_stage: 1,
-          next_review_at: next.toISOString(),
-        })
-        .eq("id", question.id);
     } else {
+      const isFirstWrong = (question.wrong_count ?? 0) === 0;
+      // Always increment wrong_count
       await supabase
         .from("questions")
         .update({ wrong_count: (question.wrong_count ?? 0) + 1 })
         .eq("id", question.id);
+      // Auto-enqueue into SRS on first-ever wrong, only if not already queued
+      if (isFirstWrong) {
+        const next = new Date();
+        next.setDate(next.getDate() + 3);
+        await supabase
+          .from("questions")
+          .update({
+            srs_stage: 1,
+            next_review_at: next.toISOString(),
+          })
+          .eq("id", question.id)
+          .is("next_review_at", null);
+      }
     }
 
     // Update session
@@ -145,6 +149,20 @@ function QuizRunPage() {
     const newVal = !starred;
     setStarred(newVal);
     await supabase.from("questions").update({ is_starred: newVal }).eq("id", question.id);
+    // Auto-enqueue into SRS when starring on, only if not already queued.
+    // Toggling off does NOT remove from the queue.
+    if (newVal) {
+      const next = new Date();
+      next.setDate(next.getDate() + 3);
+      await supabase
+        .from("questions")
+        .update({
+          srs_stage: 1,
+          next_review_at: next.toISOString(),
+        })
+        .eq("id", question.id)
+        .is("next_review_at", null);
+    }
   };
 
   if (loading || !question) {
