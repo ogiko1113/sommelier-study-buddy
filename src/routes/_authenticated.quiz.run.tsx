@@ -149,6 +149,20 @@ function QuizRunPage() {
     const newVal = !starred;
     setStarred(newVal);
     await supabase.from("questions").update({ is_starred: newVal }).eq("id", question.id);
+    // Auto-enqueue into SRS when starring on, only if not already queued.
+    // Toggling off does NOT remove from the queue.
+    if (newVal) {
+      const next = new Date();
+      next.setDate(next.getDate() + 3);
+      await supabase
+        .from("questions")
+        .update({
+          srs_stage: 1,
+          next_review_at: next.toISOString(),
+        })
+        .eq("id", question.id)
+        .is("next_review_at", null);
+    }
   };
 
   if (loading || !question) {
