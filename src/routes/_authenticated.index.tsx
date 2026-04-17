@@ -40,12 +40,13 @@ function HomePage() {
     let cancelled = false;
     (async () => {
       const nowIso = new Date().toISOString();
-      const { count, error } = await supabase
+      const { count, error } = await (supabase as any)
         .from("questions")
         .select("id", { count: "exact", head: true })
         .not("next_review_at", "is", null)
         .lte("next_review_at", nowIso)
-        .lt("srs_stage", 5);
+        .lt("srs_stage", 5)
+        .eq("is_archived", false);
       if (!cancelled) {
         if (error) {
           console.error("due count error", error);
@@ -148,6 +149,14 @@ function HomePage() {
             className="h-11 w-full text-sm font-medium"
           >
             <Link to="/drill">タグ横断演習</Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-11 w-full text-sm font-medium"
+          >
+            <Link to="/editor">問題を編集</Link>
           </Button>
           {dueCount === 0 ? (
             <Button

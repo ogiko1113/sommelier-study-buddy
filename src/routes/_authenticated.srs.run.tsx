@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { srsSession, type SrsAnswerRecord } from "@/lib/quiz-session";
 import { applySrsRating, type SrsRating } from "@/lib/srs";
 import { Star } from "lucide-react";
+import { FlagButton } from "@/components/quiz/FlagButton";
 
 export const Route = createFileRoute("/_authenticated/srs/run")({
   component: SrsRunPage,
@@ -38,12 +39,13 @@ function SrsRunPage() {
     let cancelled = false;
     (async () => {
       const nowIso = new Date().toISOString();
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("questions")
         .select("id")
         .not("next_review_at", "is", null)
         .lte("next_review_at", nowIso)
         .lt("srs_stage", 5)
+        .eq("is_archived", false)
         .order("next_review_at", { ascending: true })
         .limit(20);
       if (cancelled) return;
@@ -192,11 +194,14 @@ function SrsRunPage() {
         <span className="text-sm font-medium text-muted-foreground tabular-nums">
           SRS {progress} / {total}
         </span>
-        <button onClick={onToggleStar} aria-label="スター切り替え" className="p-2">
-          <Star
-            className={`h-6 w-6 ${starred ? "fill-primary text-primary" : "text-muted-foreground"}`}
-          />
-        </button>
+        <div className="flex items-center gap-1">
+          <FlagButton questionId={question.id} />
+          <button onClick={onToggleStar} aria-label="スター切り替え" className="p-2">
+            <Star
+              className={`h-6 w-6 ${starred ? "fill-primary text-primary" : "text-muted-foreground"}`}
+            />
+          </button>
+        </div>
       </header>
 
       <main className="mx-auto max-w-md space-y-6 px-5 py-6">

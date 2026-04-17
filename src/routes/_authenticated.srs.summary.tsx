@@ -28,10 +28,11 @@ function SrsSummaryPage() {
     let cancelled = false;
     (async () => {
       const ids = reviewItems.map((r) => r.questionId);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("questions")
         .select("id, question_text")
-        .in("id", ids);
+        .in("id", ids)
+        .eq("is_archived", false);
       if (cancelled) return;
       if (error || !data) {
         setReviewQuestions([]);
