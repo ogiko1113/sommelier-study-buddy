@@ -38,10 +38,10 @@ export function applySrsRating(currentStage: number, rating: SrsRating): SrsUpda
   }
 
   if (rating === "vague") {
-    const stage = Math.max(currentStage, 1);
+    const days = SRS_INTERVALS_DAYS[currentStage] ?? 3;
     return {
       srs_stage: currentStage,
-      next_review_at: addDays(SRS_INTERVALS_DAYS[Math.min(stage, 4)]),
+      next_review_at: addDays(days),
       last_reviewed_at: now,
     };
   }
