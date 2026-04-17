@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedDrillRouteImport } from './routes/_authenticated.drill'
 import { Route as AuthenticatedSrsSummaryRouteImport } from './routes/_authenticated.srs.summary'
 import { Route as AuthenticatedSrsRunRouteImport } from './routes/_authenticated.srs.run'
 import { Route as AuthenticatedQuizSummaryRouteImport } from './routes/_authenticated.quiz.summary'
@@ -30,6 +31,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDrillRoute = AuthenticatedDrillRouteImport.update({
+  id: '/drill',
+  path: '/drill',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSrsSummaryRoute = AuthenticatedSrsSummaryRouteImport.update({
@@ -62,6 +68,7 @@ const AuthenticatedQuizRunRoute = AuthenticatedQuizRunRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
+  '/drill': typeof AuthenticatedDrillRoute
   '/quiz/run': typeof AuthenticatedQuizRunRoute
   '/quiz/setup': typeof AuthenticatedQuizSetupRoute
   '/quiz/summary': typeof AuthenticatedQuizSummaryRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/drill': typeof AuthenticatedDrillRoute
   '/': typeof AuthenticatedIndexRoute
   '/quiz/run': typeof AuthenticatedQuizRunRoute
   '/quiz/setup': typeof AuthenticatedQuizSetupRoute
@@ -81,6 +89,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/drill': typeof AuthenticatedDrillRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/quiz/run': typeof AuthenticatedQuizRunRoute
   '/_authenticated/quiz/setup': typeof AuthenticatedQuizSetupRoute
@@ -93,6 +102,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/drill'
     | '/quiz/run'
     | '/quiz/setup'
     | '/quiz/summary'
@@ -101,6 +111,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/drill'
     | '/'
     | '/quiz/run'
     | '/quiz/setup'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/drill'
     | '/_authenticated/'
     | '/_authenticated/quiz/run'
     | '/_authenticated/quiz/setup'
@@ -145,6 +157,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/drill': {
+      id: '/_authenticated/drill'
+      path: '/drill'
+      fullPath: '/drill'
+      preLoaderRoute: typeof AuthenticatedDrillRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/srs/summary': {
@@ -186,6 +205,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedDrillRoute: typeof AuthenticatedDrillRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedQuizRunRoute: typeof AuthenticatedQuizRunRoute
   AuthenticatedQuizSetupRoute: typeof AuthenticatedQuizSetupRoute
@@ -195,6 +215,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedDrillRoute: AuthenticatedDrillRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedQuizRunRoute: AuthenticatedQuizRunRoute,
   AuthenticatedQuizSetupRoute: AuthenticatedQuizSetupRoute,

@@ -8,10 +8,24 @@ export const Route = createFileRoute("/_authenticated/")({
   component: HomePage,
 });
 
+type TagStat = {
+  tag: string;
+  total_answers: number;
+  correct_rate: number | null;
+};
+
+function rateColorClass(rate: number) {
+  if (rate < 0.6) return "bg-red-500/15 border-red-500/40";
+  if (rate < 0.75) return "bg-amber-500/15 border-amber-500/40";
+  return "bg-emerald-500/15 border-emerald-500/40";
+}
+
 function HomePage() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [dueCount, setDueCount] = useState<number | null>(null);
+  const [tagStats, setTagStats] = useState<TagStat[] | null>(null);
+  const [tagStatsError, setTagStatsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -29,6 +43,29 @@ function HomePage() {
         } else {
           setDueCount(count ?? 0);
         }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      // tag_stats view isn't in generated types — cast to any
+      const { data, error } = await (supabase as any)
+        .from("tag_stats")
+        .select("tag,total_answers,correct_rate")
+        .order("correct_rate", { ascending: true, nullsFirst: false });
+      if (cancelled) return;
+      if (error) {
+        console.error("tag_stats error", error);
+        setTagStatsError("タグ統計を取得できませんでした");
+        setTagStats([]);
+      } else {
+        setTagStats((data ?? []) as TagStat[]);
       }
     })();
     return () => {
@@ -78,6 +115,14 @@ function HomePage() {
           <Button
             asChild
             variant="outline"
+            size="sm"
+            className="h-11 w-full text-sm font-medium"
+          >
+            <Link to="/drill">タグ横断演習</Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
             disabled={dueCount === 0}
             className="h-14 w-full text-base font-medium"
           >
@@ -88,6 +133,65 @@ function HomePage() {
             )}
           </Button>
         </div>
+
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold text-foreground">タグ別正答率</h2>
+          {tagStats === null ? (
+            <p className="text-sm text-muted-foreground">読み込み中...</p>
+          ) : tagStatsError ? (
+            <p className="text-sm text-destructive">{tagStatsError}</p>
+          ) : tagStats.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              まだ回答記録がありません
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {tagStats.map((row) => {
+                const insufficient =
+                  row.total_answers < 5 || row.correct_rate === null;
+                const rate = row.correct_rate ?? 0;
+                const colorClass = insufficient
+                  ? "bg-muted border-border opacity-60"
+                  : rateColorClass(rate);
+                return (
+                  <li key={row.tag}>
+                    <Link
+                      to="/drill"
+                      search={{ tag: row.tag, autostart: "1" }}
+                      className={`flex items-center justify-between rounded-lg border px-4 py-3 transition-colors hover:brightness-95 ${colorClass}`}
+                    >
+                      <span className="text-sm font-medium text-foreground">
+                        {row.tag}
+                      </span>
+                      <span className="flex items-center gap-2">
+                        {insufficient ? (
+                          <span className="text-xs text-muted-foreground">
+                            n&lt;5(計測不可)
+                          </span>
+                        ) : (
+                          <>
+                            <span className="text-base font-semibold tabular-nums text-foreground">
+                              {Math.round(rate * 100)}%
+                            </span>
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              n={row.total_answers}
+                            </span>
+                          </>
+                        )}
+                        <span
+                          aria-hidden
+                          className="text-muted-foreground"
+                        >
+                          ›
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
       </main>
     </div>
   );
