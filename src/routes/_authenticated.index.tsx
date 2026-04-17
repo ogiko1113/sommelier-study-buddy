@@ -81,6 +81,29 @@ function HomePage() {
     };
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      // category_stats view isn't in generated types — cast to any
+      const { data, error } = await (supabase as any)
+        .from("category_stats")
+        .select("category,total_answers,correct_rate")
+        .order("correct_rate", { ascending: true, nullsFirst: false });
+      if (cancelled) return;
+      if (error) {
+        console.error("category_stats error", error);
+        setCategoryStatsError("カテゴリ統計を取得できませんでした");
+        setCategoryStats([]);
+      } else {
+        setCategoryStats((data ?? []) as CategoryStat[]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   const onLogout = async () => {
     await signOut();
     navigate({ to: "/login" });
