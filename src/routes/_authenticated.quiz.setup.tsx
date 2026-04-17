@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { quizSession, type AnswerRecord } from "@/lib/quiz-session";
 
+type QuizSetupSearch = { category?: string };
+
 export const Route = createFileRoute("/_authenticated/quiz/setup")({
+  validateSearch: (search: Record<string, unknown>): QuizSetupSearch => ({
+    category: typeof search.category === "string" ? search.category : undefined,
+  }),
   component: QuizSetupPage,
 });
 
@@ -15,7 +20,12 @@ type Order = "random" | "unanswered" | "wrong";
 
 function QuizSetupPage() {
   const navigate = useNavigate();
-  const [category, setCategory] = useState<string>(CATEGORIES[0]);
+  const { category: initialCategory } = Route.useSearch();
+  const [category, setCategory] = useState<string>(
+    initialCategory && (CATEGORIES as readonly string[]).includes(initialCategory)
+      ? initialCategory
+      : CATEGORIES[0],
+  );
   const [subcategory, setSubcategory] = useState<string>("");
   const [difficulties, setDifficulties] = useState<number[]>([1, 2, 3]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
