@@ -23,6 +23,7 @@ function EditorNewPage() {
     if (!user) return;
     setSubmitting(true);
     const isCard = values.question_type === "flashcard";
+    const isFill = values.question_type === "fill_blank";
     const { error } = await (supabase as any).from("questions").insert({
       user_id: user.id,
       category: values.category,
@@ -30,14 +31,16 @@ function EditorNewPage() {
       tags: values.tags,
       question_type: values.question_type,
       question_text: isCard ? "" : values.question_text,
-      options: isCard ? [] : values.options,
-      answer_index: isCard ? 0 : values.answer_index,
+      options: isCard || isFill ? [] : values.options,
+      answer_index: isCard || isFill ? 0 : values.answer_index,
       difficulty: values.difficulty,
       explanation: values.explanation,
       explanation_depth: values.explanation_depth,
       image_url: values.image_url,
       card_front: isCard ? values.card_front : null,
       card_back: isCard ? values.card_back : null,
+      input_mode: isFill ? values.input_mode : null,
+      blanks: isFill ? values.blanks : null,
     });
     setSubmitting(false);
     if (error) {
@@ -52,6 +55,7 @@ function EditorNewPage() {
         category: values.category,
         subcategory: values.subcategory,
         tags: values.tags,
+        question_type: values.question_type,
       });
       setFormKey((k) => k + 1);
     } else {

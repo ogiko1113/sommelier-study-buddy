@@ -75,6 +75,15 @@ function EditorEditPage() {
       image_url: data.image_url ?? null,
       card_front: data.card_front ?? null,
       card_back: data.card_back ?? null,
+      input_mode: data.input_mode ?? null,
+      blanks: Array.isArray(data.blanks)
+        ? data.blanks.map((b: any) => ({
+            index: Number(b.index),
+            answer: String(b.answer ?? ""),
+            accept: Array.isArray(b.accept) ? b.accept.map(String) : [],
+            options: Array.isArray(b.options) ? b.options.map(String) : [],
+          }))
+        : [],
       is_archived: !!data.is_archived,
       needs_review: !!data.needs_review,
       review_note: data.review_note ?? null,
@@ -96,6 +105,7 @@ function EditorEditPage() {
   const onSubmit = async (values: QuestionFormValues, _mode: SubmitMode) => {
     setSubmitting(true);
     const isCard = values.question_type === "flashcard";
+    const isFill = values.question_type === "fill_blank";
     const { error } = await (supabase as any)
       .from("questions")
       .update({
@@ -104,14 +114,16 @@ function EditorEditPage() {
         tags: values.tags,
         question_type: values.question_type,
         question_text: isCard ? "" : values.question_text,
-        options: isCard ? [] : values.options,
-        answer_index: isCard ? 0 : values.answer_index,
+        options: isCard || isFill ? [] : values.options,
+        answer_index: isCard || isFill ? 0 : values.answer_index,
         difficulty: values.difficulty,
         explanation: values.explanation,
         explanation_depth: values.explanation_depth,
         image_url: values.image_url,
         card_front: isCard ? values.card_front : null,
         card_back: isCard ? values.card_back : null,
+        input_mode: isFill ? values.input_mode : null,
+        blanks: isFill ? values.blanks : null,
       })
       .eq("id", id);
     setSubmitting(false);

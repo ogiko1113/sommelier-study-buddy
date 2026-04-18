@@ -59,19 +59,25 @@ function EditorImportPage() {
     setImporting(true);
     const payload = toInsert.map((r) => {
       const p = r.parsed!;
+      const isCard = p.question_type === "flashcard";
+      const isFill = p.question_type === "fill_blank";
       return {
         user_id: user.id,
         category: p.category,
         subcategory: p.subcategory ?? null,
         tags: p.tags ?? [],
-        question_type: "multiple_choice",
-        question_text: p.question_text,
-        options: p.options,
-        answer_index: p.answer_index,
+        question_type: p.question_type,
+        question_text: isCard ? "" : p.question_text,
+        options: isCard || isFill ? [] : (p.options ?? []),
+        answer_index: isCard || isFill ? 0 : (p.answer_index ?? 0),
         difficulty: p.difficulty,
         explanation: p.explanation,
         explanation_depth: p.explanation_depth,
         image_url: (p as any).image_url ?? null,
+        card_front: isCard ? (p.card_front ?? null) : null,
+        card_back: isCard ? (p.card_back ?? null) : null,
+        input_mode: isFill ? (p.input_mode ?? null) : null,
+        blanks: isFill ? (p.blanks ?? null) : null,
       };
     });
     const { error, count } = await (supabase as any)
@@ -154,6 +160,8 @@ function EditorImportPage() {
                       />
                       <div className="min-w-0 flex-1 space-y-1">
                         <p className="text-sm leading-snug text-foreground">
+                          {(r.raw as any)?.question_type === "fill_blank" ? "📝 " : ""}
+                          {(r.raw as any)?.question_type === "flashcard" ? "🃏 " : ""}
                           {(r.raw as any)?.image_url ? "🖼 画像あり · " : ""}
                           {truncated}
                         </p>
