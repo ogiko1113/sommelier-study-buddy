@@ -7,6 +7,7 @@ import { srsSession, type SrsAnswerRecord } from "@/lib/quiz-session";
 import { applySrsRating, type SrsRating } from "@/lib/srs";
 import { Star } from "lucide-react";
 import { FlagButton } from "@/components/quiz/FlagButton";
+import { QuestionImage } from "@/components/quiz/QuestionImage";
 
 export const Route = createFileRoute("/_authenticated/srs/run")({
   component: SrsRunPage,
@@ -20,6 +21,7 @@ interface Question {
   explanation: string;
   is_starred: boolean;
   srs_stage: number;
+  image_url: string | null;
 }
 
 function SrsRunPage() {
@@ -90,10 +92,10 @@ function SrsRunPage() {
     setSelected(null);
     setRevealed(false);
     (async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("questions")
         .select(
-          "id, question_text, options, answer_index, explanation, is_starred, srs_stage",
+          "id, question_text, options, answer_index, explanation, is_starred, srs_stage, image_url",
         )
         .eq("id", qid)
         .single();
@@ -205,6 +207,8 @@ function SrsRunPage() {
       </header>
 
       <main className="mx-auto max-w-md space-y-6 px-5 py-6">
+        {question.image_url && <QuestionImage url={question.image_url} />}
+
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <p className="text-lg leading-relaxed text-foreground">{question.question_text}</p>
         </div>
