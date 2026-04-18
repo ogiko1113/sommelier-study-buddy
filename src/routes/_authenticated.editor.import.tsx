@@ -71,6 +71,7 @@ function EditorImportPage() {
         difficulty: p.difficulty,
         explanation: p.explanation,
         explanation_depth: p.explanation_depth,
+        image_url: (p as any).image_url ?? null,
       };
     });
     const { error, count } = await (supabase as any)

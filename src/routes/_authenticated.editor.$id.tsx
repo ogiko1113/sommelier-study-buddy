@@ -72,6 +72,7 @@ function EditorEditPage() {
       difficulty: data.difficulty,
       explanation: data.explanation,
       explanation_depth: data.explanation_depth,
+      image_url: data.image_url ?? null,
       is_archived: !!data.is_archived,
       needs_review: !!data.needs_review,
       review_note: data.review_note ?? null,
@@ -105,6 +106,7 @@ function EditorEditPage() {
         difficulty: values.difficulty,
         explanation: values.explanation,
         explanation_depth: values.explanation_depth,
+        image_url: values.image_url,
       })
       .eq("id", id);
     setSubmitting(false);
