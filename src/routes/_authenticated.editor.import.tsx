@@ -71,6 +71,7 @@ function EditorImportPage() {
         difficulty: p.difficulty,
         explanation: p.explanation,
         explanation_depth: p.explanation_depth,
+        image_url: (p as any).image_url ?? null,
       };
     });
     const { error, count } = await (supabase as any)
@@ -152,7 +153,10 @@ function EditorImportPage() {
                         aria-label={`行 ${r.index + 1} をインポート対象にする`}
                       />
                       <div className="min-w-0 flex-1 space-y-1">
-                        <p className="text-sm leading-snug text-foreground">{truncated}</p>
+                        <p className="text-sm leading-snug text-foreground">
+                          {(r.raw as any)?.image_url ? "🖼 画像あり · " : ""}
+                          {truncated}
+                        </p>
                         <p className="text-xs text-muted-foreground tabular-nums">
                           {(r.raw as any)?.category ?? "—"} ·{" "}
                           {(r.raw as any)?.question_type ?? "multiple_choice"} · 難{" "}

@@ -34,6 +34,7 @@ function EditorNewPage() {
       difficulty: values.difficulty,
       explanation: values.explanation,
       explanation_depth: values.explanation_depth,
+      image_url: values.image_url,
     });
     setSubmitting(false);
     if (error) {

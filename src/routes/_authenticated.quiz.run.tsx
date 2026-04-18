@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { quizSession, type AnswerRecord } from "@/lib/quiz-session";
 import { Star } from "lucide-react";
 import { FlagButton } from "@/components/quiz/FlagButton";
+import { QuestionImage } from "@/components/quiz/QuestionImage";
 
 export const Route = createFileRoute("/_authenticated/quiz/run")({
   component: QuizRunPage,
@@ -21,6 +22,7 @@ interface Question {
   srs_stage: number;
   correct_count: number;
   wrong_count: number;
+  image_url: string | null;
 }
 
 function QuizRunPage() {
@@ -51,10 +53,10 @@ function QuizRunPage() {
     setSelected(null);
     setRevealed(false);
     (async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("questions")
         .select(
-          "id, question_text, options, answer_index, explanation, is_starred, srs_stage, correct_count, wrong_count",
+          "id, question_text, options, answer_index, explanation, is_starred, srs_stage, correct_count, wrong_count, image_url",
         )
         .eq("id", qid)
         .single();
@@ -195,6 +197,8 @@ function QuizRunPage() {
       </header>
 
       <main className="mx-auto max-w-md space-y-6 px-5 py-6">
+        {question.image_url && <QuestionImage url={question.image_url} />}
+
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <p className="text-lg leading-relaxed text-foreground">{question.question_text}</p>
         </div>

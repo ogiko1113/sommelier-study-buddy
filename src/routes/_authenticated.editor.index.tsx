@@ -25,6 +25,7 @@ interface QRow {
   difficulty: number;
   needs_review: boolean;
   is_archived: boolean;
+  image_url: string | null;
   correct_count: number;
   wrong_count: number;
   created_at: string;
@@ -67,7 +68,7 @@ function EditorListPage() {
       let q = (supabase as any)
         .from("questions")
         .select(
-          "id, category, subcategory, question_text, question_type, difficulty, needs_review, is_archived, correct_count, wrong_count, created_at",
+          "id, category, subcategory, question_text, question_type, difficulty, needs_review, is_archived, image_url, correct_count, wrong_count, created_at",
           { count: "exact" },
         );
 
@@ -247,6 +248,11 @@ function EditorListPage() {
                         {r.is_archived && (
                           <span title="アーカイブ済み" aria-label="アーカイブ済み">
                             📦
+                          </span>
+                        )}
+                        {r.image_url && (
+                          <span title="画像あり" aria-label="画像あり">
+                            🖼
                           </span>
                         )}
                       </div>

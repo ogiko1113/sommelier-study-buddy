@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { questionSchema, type QuestionFormValues } from "@/lib/question-validation";
+import { ImageUploadField } from "@/components/editor/ImageUploadField";
 
 export type SubmitMode = "save" | "save_and_new";
 
@@ -30,6 +31,7 @@ const EMPTY_VALUES: QuestionFormValues = {
   difficulty: 1,
   explanation: "",
   explanation_depth: "short",
+  image_url: null,
 };
 
 export function QuestionForm({
@@ -49,6 +51,7 @@ export function QuestionForm({
   }));
   const [tagInput, setTagInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [imageUploading, setImageUploading] = useState(false);
 
   // Reset when `initial` identity changes (e.g. edit page loaded different question)
   useEffect(() => {
@@ -134,6 +137,13 @@ export function QuestionForm({
 
   return (
     <div className="space-y-6">
+      {/* Image */}
+      <ImageUploadField
+        value={values.image_url ?? null}
+        onChange={(url) => setField("image_url", url)}
+        onUploadingChange={setImageUploading}
+      />
+
       {/* Category */}
       <div className="space-y-2">
         <Label className="text-base">カテゴリ <span className="text-destructive">*</span></Label>
@@ -377,17 +387,17 @@ export function QuestionForm({
         <Button
           type="button"
           onClick={() => submit("save")}
-          disabled={submitting}
+          disabled={submitting || imageUploading}
           className="h-14 w-full text-base font-medium"
         >
-          {submitting ? "保存中..." : "保存"}
+          {submitting ? "保存中..." : imageUploading ? "画像アップロード中..." : "保存"}
         </Button>
         {showSaveAndNew && (
           <Button
             type="button"
             variant="outline"
             onClick={() => submit("save_and_new")}
-            disabled={submitting}
+            disabled={submitting || imageUploading}
             className="h-12 w-full text-sm font-medium"
           >
             保存して続けて作成(カテゴリ・タグを保持)
