@@ -17,6 +17,7 @@ export type QuestionFormValues = {
   difficulty: 1 | 2 | 3;
   explanation: string;
   explanation_depth: ExplanationDepth;
+  image_url: string | null;
 };
 
 // Schema used by the manual form (after UI-side normalization)
@@ -45,6 +46,7 @@ export const questionSchema = z
     difficulty: z.union([z.literal(1), z.literal(2), z.literal(3)]),
     explanation: z.string().trim().min(1, "解説は必須です").max(4000),
     explanation_depth: z.enum(EXPLANATION_DEPTHS),
+    image_url: z.string().url().nullable().optional(),
   })
   .superRefine((val, ctx) => {
     if (val.question_type === "fill_blank") {
@@ -83,6 +85,7 @@ export const importItemSchema = z
       .number()
       .int()
       .refine((v) => v === 1 || v === 2 || v === 3, "difficulty は 1〜3 です"),
+    image_url: z.string().url("image_url は有効なURLである必要があります").optional(),
   })
   .passthrough();
 
