@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/editor/")({
 });
 
 type ArchiveFilter = "non_archived" | "all" | "archived";
-type TypeFilter = "all" | "multiple_choice" | "fill_blank";
+type TypeFilter = "all" | "multiple_choice" | "flashcard" | "fill_blank";
 type DifficultyFilter = "all" | "1" | "2" | "3";
 type ReviewFilter = "all" | "needs_review";
 
@@ -145,6 +145,7 @@ function EditorListPage() {
               >
                 <option value="all">すべて</option>
                 <option value="multiple_choice">クイズ</option>
+                <option value="flashcard">カード</option>
                 <option value="fill_blank">穴埋め</option>
               </select>
             </div>
@@ -235,7 +236,11 @@ function EditorListPage() {
                           {r.subcategory ? ` / ${r.subcategory}` : ""}
                         </span>
                         <span className="rounded bg-secondary px-2 py-0.5 text-secondary-foreground">
-                          {r.question_type === "multiple_choice" ? "クイズ" : "穴埋め"}
+                          {r.question_type === "multiple_choice"
+                            ? "クイズ"
+                            : r.question_type === "flashcard"
+                              ? "カード"
+                              : "穴埋め"}
                         </span>
                         <span className="rounded bg-secondary px-2 py-0.5 text-secondary-foreground tabular-nums">
                           難 {r.difficulty}
