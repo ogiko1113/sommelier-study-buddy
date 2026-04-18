@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { applySrsRating, type SrsRating } from "@/lib/srs";
 import { Star } from "lucide-react";
 import { FlagButton } from "@/components/quiz/FlagButton";
 import { QuestionImage } from "@/components/quiz/QuestionImage";
+import { FillBlankRunner } from "@/components/quiz/FillBlankRunner";
+import { scoreFillBlank, type Blank } from "@/lib/fill-blank-judge";
 
 export const Route = createFileRoute("/_authenticated/srs/run")({
   component: SrsRunPage,
@@ -15,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/srs/run")({
 
 interface Question {
   id: string;
+  question_type: string;
   question_text: string;
   options: string[];
   answer_index: number;
@@ -22,6 +25,8 @@ interface Question {
   is_starred: boolean;
   srs_stage: number;
   image_url: string | null;
+  input_mode: "text" | "select" | null;
+  blanks: Blank[];
 }
 
 function SrsRunPage() {
@@ -34,8 +39,8 @@ function SrsRunPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [starred, setStarred] = useState(false);
+  const [fbInputs, setFbInputs] = useState<Record<number, string>>({});
 
-  // Build queue if no active session — strict spec query, limit 20
   useEffect(() => {
     if (session || !user) return;
     let cancelled = false;
@@ -91,11 +96,12 @@ function SrsRunPage() {
     setLoading(true);
     setSelected(null);
     setRevealed(false);
+    setFbInputs({});
     (async () => {
       const { data, error } = await (supabase as any)
         .from("questions")
         .select(
-          "id, question_text, options, answer_index, explanation, is_starred, srs_stage, image_url",
+          "id, question_type, question_text, options, answer_index, explanation, is_starred, srs_stage, image_url, input_mode, blanks",
         )
         .eq("id", qid)
         .single();
@@ -107,6 +113,14 @@ function SrsRunPage() {
       const q: Question = {
         ...data,
         options: Array.isArray(data.options) ? (data.options as string[]) : [],
+        blanks: Array.isArray(data.blanks)
+          ? (data.blanks as any[]).map((b) => ({
+              index: Number(b.index),
+              answer: String(b.answer ?? ""),
+              accept: Array.isArray(b.accept) ? b.accept.map(String) : [],
+              options: Array.isArray(b.options) ? b.options.map(String) : [],
+            }))
+          : [],
       };
       setQuestion(q);
       setStarred(q.is_starred);
@@ -116,6 +130,18 @@ function SrsRunPage() {
       cancelled = true;
     };
   }, [session?.currentIndex, session?.questionIds]);
+
+  const fbScore = useMemo(() => {
+    if (!question || question.question_type !== "fill_blank") return null;
+    return scoreFillBlank(fbInputs, question.blanks);
+  }, [fbInputs, question]);
+
+  const allFilled = useMemo(() => {
+    if (!question || question.question_type !== "fill_blank") return false;
+    return question.blanks.every(
+      (b) => (fbInputs[b.index] ?? "").trim().length > 0,
+    );
+  }, [fbInputs, question]);
 
   if (bootstrapping || !session) {
     return (
@@ -128,25 +154,33 @@ function SrsRunPage() {
   const total = session.questionIds.length;
   const progress = session.currentIndex + 1;
 
+  const isFill = question?.question_type === "fill_blank";
+
   const onSelect = (idx: number) => {
     if (revealed || !question) return;
     setSelected(idx);
     setRevealed(true);
   };
 
-  const onRate = async (rating: SrsRating) => {
-    if (!question || !user || selected === null) return;
-    // Spec: is_correct = true ONLY when rating is "perfect"
-    const isCorrect = rating === "perfect";
+  const onRevealFillBlank = () => {
+    if (revealed || !question) return;
+    setRevealed(true);
+  };
 
+  const onRate = async (rating: SrsRating) => {
+    if (!question || !user) return;
+    if (!isFill && selected === null) return;
+    const isCorrect = rating === "perfect";
     const update = applySrsRating(question.srs_stage, rating);
 
     await supabase.from("answer_logs").insert({
       user_id: user.id,
       question_id: question.id,
       is_correct: isCorrect,
-      selected_index: selected,
-      selected_text: question.options[selected] ?? null,
+      selected_index: isFill ? null : selected,
+      selected_text: isFill
+        ? JSON.stringify(fbInputs)
+        : (question.options[selected!] ?? null),
       srs_rating: rating,
       mode: "srs_review",
     });
@@ -162,7 +196,7 @@ function SrsRunPage() {
 
     const newAnswer: SrsAnswerRecord = {
       questionId: question.id,
-      selectedIndex: selected,
+      selectedIndex: isFill ? -1 : (selected ?? -1),
       isCorrect,
       rating,
     };
@@ -209,41 +243,75 @@ function SrsRunPage() {
       <main className="mx-auto max-w-md space-y-6 px-5 py-6">
         {question.image_url && <QuestionImage url={question.image_url} />}
 
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
-          <p className="text-lg leading-relaxed text-foreground">{question.question_text}</p>
-        </div>
-
-        <div className="space-y-3">
-          {question.options.map((opt, idx) => {
-            const isCorrect = idx === question.answer_index;
-            const isSelected = idx === selected;
-            let cls = "border-input bg-card text-foreground hover:bg-accent";
-            if (revealed) {
-              if (isCorrect) {
-                cls = "border-primary bg-primary/10 text-foreground";
-              } else if (isSelected) {
-                cls = "border-muted-foreground/40 bg-muted text-muted-foreground";
-              } else {
-                cls = "border-input bg-card text-muted-foreground opacity-60";
+        {isFill ? (
+          <>
+            <FillBlankRunner
+              questionText={question.question_text}
+              blanks={question.blanks}
+              inputMode={question.input_mode ?? "text"}
+              inputs={fbInputs}
+              onChange={(idx, value) =>
+                setFbInputs((prev) => ({ ...prev, [idx]: value }))
               }
-            }
-            return (
-              <button
-                key={idx}
-                onClick={() => onSelect(idx)}
-                disabled={revealed}
-                className={`flex min-h-14 w-full items-center rounded-xl border px-4 py-3 text-left text-base leading-relaxed transition-colors ${cls}`}
+              revealed={revealed}
+              perBlank={fbScore?.perBlank}
+            />
+            {!revealed && (
+              <Button
+                onClick={onRevealFillBlank}
+                disabled={!allFilled}
+                className="h-14 w-full text-base font-medium"
               >
-                <span className="mr-3 font-semibold tabular-nums">{idx + 1}.</span>
-                <span className="flex-1">{opt}</span>
-                {revealed && isCorrect && <span className="ml-2 text-primary">○</span>}
-                {revealed && isSelected && !isCorrect && (
-                  <span className="ml-2 text-muted-foreground">×</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                答えを表示
+              </Button>
+            )}
+            {revealed && fbScore && (
+              <div className="rounded-xl border bg-accent/40 p-3 text-center">
+                <p className="text-base font-semibold tabular-nums">
+                  {fbScore.correctCount} / {fbScore.total} 正解
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="rounded-xl border bg-card p-5 shadow-sm">
+              <p className="text-lg leading-relaxed text-foreground">{question.question_text}</p>
+            </div>
+
+            <div className="space-y-3">
+              {question.options.map((opt, idx) => {
+                const isCorrect = idx === question.answer_index;
+                const isSelected = idx === selected;
+                let cls = "border-input bg-card text-foreground hover:bg-accent";
+                if (revealed) {
+                  if (isCorrect) {
+                    cls = "border-primary bg-primary/10 text-foreground";
+                  } else if (isSelected) {
+                    cls = "border-muted-foreground/40 bg-muted text-muted-foreground";
+                  } else {
+                    cls = "border-input bg-card text-muted-foreground opacity-60";
+                  }
+                }
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => onSelect(idx)}
+                    disabled={revealed}
+                    className={`flex min-h-14 w-full items-center rounded-xl border px-4 py-3 text-left text-base leading-relaxed transition-colors ${cls}`}
+                  >
+                    <span className="mr-3 font-semibold tabular-nums">{idx + 1}.</span>
+                    <span className="flex-1">{opt}</span>
+                    {revealed && isCorrect && <span className="ml-2 text-primary">○</span>}
+                    {revealed && isSelected && !isCorrect && (
+                      <span className="ml-2 text-muted-foreground">×</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
 
         {revealed && (
           <>
