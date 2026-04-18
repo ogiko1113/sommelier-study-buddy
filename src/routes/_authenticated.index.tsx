@@ -145,6 +145,13 @@ function HomePage() {
           <Button
             asChild
             variant="outline"
+            className="h-14 w-full text-base font-medium"
+          >
+            <Link to="/cards/setup">フラッシュカードを始める</Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
             size="sm"
             className="h-11 w-full text-sm font-medium"
           >

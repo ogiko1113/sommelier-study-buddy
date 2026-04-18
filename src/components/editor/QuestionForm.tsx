@@ -32,6 +32,8 @@ const EMPTY_VALUES: QuestionFormValues = {
   explanation: "",
   explanation_depth: "short",
   image_url: null,
+  card_front: null,
+  card_back: null,
 };
 
 export function QuestionForm({
@@ -267,61 +269,105 @@ export function QuestionForm({
           </button>
           <button
             type="button"
+            onClick={() => setField("question_type", "flashcard")}
+            className={`h-10 flex-1 rounded-md border text-sm font-medium transition-colors ${
+              values.question_type === "flashcard"
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-input bg-card text-foreground"
+            }`}
+          >
+            カード
+          </button>
+          <button
+            type="button"
             disabled
             className="h-10 flex-1 rounded-md border border-input bg-muted text-sm font-medium text-muted-foreground"
           >
-            穴埋め(近日対応)
+            穴埋め
           </button>
         </div>
       </div>
 
-      {/* Question text */}
-      <div className="space-y-2">
-        <Label className="text-base">
-          問題文 <span className="text-destructive">*</span>
-        </Label>
-        <Textarea
-          value={values.question_text}
-          onChange={(e) => setField("question_text", e.target.value)}
-          rows={4}
-          className="text-base"
-        />
-        {fieldError("question_text")}
-      </div>
+      {values.question_type === "flashcard" ? (
+        <>
+          <div className="space-y-2">
+            <Label className="text-base">
+              表面 <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              value={values.card_front ?? ""}
+              onChange={(e) => setField("card_front", e.target.value)}
+              rows={4}
+              className="text-base"
+              placeholder="例: ボルドー左岸の代表的な品種は?"
+            />
+            {fieldError("card_front")}
+          </div>
+          <div className="space-y-2">
+            <Label className="text-base">
+              裏面 <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              value={values.card_back ?? ""}
+              onChange={(e) => setField("card_back", e.target.value)}
+              rows={4}
+              className="text-base"
+              placeholder="例: カベルネ・ソーヴィニヨン"
+            />
+            {fieldError("card_back")}
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Question text */}
+          <div className="space-y-2">
+            <Label className="text-base">
+              問題文 <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              value={values.question_text}
+              onChange={(e) => setField("question_text", e.target.value)}
+              rows={4}
+              className="text-base"
+            />
+            {fieldError("question_text")}
+          </div>
 
-      {/* Options */}
-      <div className="space-y-2">
-        <Label className="text-base">
-          選択肢 <span className="text-destructive">*</span>
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            (左のラジオで正解を選択)
-          </span>
-        </Label>
-        <div className="space-y-2">
-          {[0, 1, 2, 3].map((idx) => (
-            <div key={idx} className="flex items-center gap-3">
-              <input
-                type="radio"
-                name="answer_index"
-                checked={values.answer_index === idx}
-                onChange={() => setField("answer_index", idx)}
-                className="h-5 w-5 accent-primary"
-                aria-label={`選択肢 ${idx + 1} を正解にする`}
-              />
-              <span className="w-5 text-sm font-semibold text-muted-foreground tabular-nums">
-                {idx + 1}.
+          {/* Options */}
+          <div className="space-y-2">
+            <Label className="text-base">
+              選択肢 <span className="text-destructive">*</span>
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                (左のラジオで正解を選択)
               </span>
-              <Input
-                value={values.options[idx]}
-                onChange={(e) => setOption(idx, e.target.value)}
-                className="flex-1"
-              />
+            </Label>
+            <div className="space-y-2">
+              {[0, 1, 2, 3].map((idx) => (
+                <div key={idx} className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    name="answer_index"
+                    checked={values.answer_index === idx}
+                    onChange={() => setField("answer_index", idx)}
+                    className="h-5 w-5 accent-primary"
+                    aria-label={`選択肢 ${idx + 1} を正解にする`}
+                  />
+                  <span className="w-5 text-sm font-semibold text-muted-foreground tabular-nums">
+                    {idx + 1}.
+                  </span>
+                  <Input
+                    value={values.options[idx]}
+                    onChange={(e) => setOption(idx, e.target.value)}
+                    className="flex-1"
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        {fieldError("options")}
-        {fieldError("answer_index")}
-      </div>
+            {fieldError("options")}
+            {fieldError("answer_index")}
+          </div>
+        </>
+      )}
 
       {/* Difficulty */}
       <div className="space-y-2">
@@ -349,7 +395,12 @@ export function QuestionForm({
       {/* Explanation */}
       <div className="space-y-2">
         <Label className="text-base">
-          解説 <span className="text-destructive">*</span>
+          解説{" "}
+          {values.question_type === "flashcard" ? (
+            <span className="ml-2 text-xs font-normal text-muted-foreground">(任意)</span>
+          ) : (
+            <span className="text-destructive">*</span>
+          )}
         </Label>
         <Textarea
           value={values.explanation}

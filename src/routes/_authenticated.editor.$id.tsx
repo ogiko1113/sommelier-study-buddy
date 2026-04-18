@@ -73,6 +73,8 @@ function EditorEditPage() {
       explanation: data.explanation,
       explanation_depth: data.explanation_depth,
       image_url: data.image_url ?? null,
+      card_front: data.card_front ?? null,
+      card_back: data.card_back ?? null,
       is_archived: !!data.is_archived,
       needs_review: !!data.needs_review,
       review_note: data.review_note ?? null,
@@ -93,6 +95,7 @@ function EditorEditPage() {
 
   const onSubmit = async (values: QuestionFormValues, _mode: SubmitMode) => {
     setSubmitting(true);
+    const isCard = values.question_type === "flashcard";
     const { error } = await (supabase as any)
       .from("questions")
       .update({
@@ -100,13 +103,15 @@ function EditorEditPage() {
         subcategory: values.subcategory,
         tags: values.tags,
         question_type: values.question_type,
-        question_text: values.question_text,
-        options: values.options,
-        answer_index: values.answer_index,
+        question_text: isCard ? "" : values.question_text,
+        options: isCard ? [] : values.options,
+        answer_index: isCard ? 0 : values.answer_index,
         difficulty: values.difficulty,
         explanation: values.explanation,
         explanation_depth: values.explanation_depth,
         image_url: values.image_url,
+        card_front: isCard ? values.card_front : null,
+        card_back: isCard ? values.card_back : null,
       })
       .eq("id", id);
     setSubmitting(false);
@@ -118,6 +123,7 @@ function EditorEditPage() {
     toast.success("変更を保存しました");
     navigate({ to: "/editor" });
   };
+
 
   const onClearReviewFlag = async () => {
     const { error } = await (supabase as any)

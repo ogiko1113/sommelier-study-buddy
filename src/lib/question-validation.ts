@@ -10,7 +10,7 @@ export type QuestionFormValues = {
   category: string;
   subcategory: string | null;
   tags: string[];
-  question_type: "multiple_choice" | "fill_blank";
+  question_type: "multiple_choice" | "fill_blank" | "flashcard";
   question_text: string;
   options: [string, string, string, string];
   answer_index: number;
@@ -18,6 +18,8 @@ export type QuestionFormValues = {
   explanation: string;
   explanation_depth: ExplanationDepth;
   image_url: string | null;
+  card_front: string | null;
+  card_back: string | null;
 };
 
 // Schema used by the manual form (after UI-side normalization)
@@ -33,20 +35,18 @@ export const questionSchema = z
       .array(z.string().trim().min(1))
       .min(1, "タグを1つ以上指定してください")
       .max(3, "タグは最大3つまでです"),
-    question_type: z.enum(["multiple_choice", "fill_blank"]),
-    question_text: z.string().trim().min(1, "問題文は必須です").max(2000),
+    question_type: z.enum(["multiple_choice", "fill_blank", "flashcard"]),
+    question_text: z.string().trim().max(2000).optional().default(""),
     options: z
-      .array(z.string().trim().min(1, "選択肢は空にできません"))
+      .array(z.string().trim())
       .length(4, "選択肢は4つ必要です"),
-    answer_index: z
-      .number()
-      .int()
-      .min(0, "正解を選択してください")
-      .max(3, "正解インデックスが範囲外です"),
+    answer_index: z.number().int(),
     difficulty: z.union([z.literal(1), z.literal(2), z.literal(3)]),
-    explanation: z.string().trim().min(1, "解説は必須です").max(4000),
+    explanation: z.string().trim().max(4000).optional().default(""),
     explanation_depth: z.enum(EXPLANATION_DEPTHS),
     image_url: z.string().url().nullable().optional(),
+    card_front: z.string().trim().nullable().optional(),
+    card_back: z.string().trim().nullable().optional(),
   })
   .superRefine((val, ctx) => {
     if (val.question_type === "fill_blank") {
@@ -54,6 +54,58 @@ export const questionSchema = z
         code: z.ZodIssueCode.custom,
         path: ["question_type"],
         message: "穴埋め問題は現在サポートされていません",
+      });
+      return;
+    }
+    if (val.question_type === "flashcard") {
+      if (!val.card_front || val.card_front.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["card_front"],
+          message: "表面は必須です",
+        });
+      }
+      if (!val.card_back || val.card_back.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["card_back"],
+          message: "裏面は必須です",
+        });
+      }
+      if (!val.explanation || val.explanation.length === 0) {
+        // explanation not required for flashcards — clear any prior error
+      }
+      return;
+    }
+    // multiple_choice
+    if (!val.question_text || val.question_text.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["question_text"],
+        message: "問題文は必須です",
+      });
+    }
+    if (!val.explanation || val.explanation.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["explanation"],
+        message: "解説は必須です",
+      });
+    }
+    val.options.forEach((o, i) => {
+      if (!o || o.length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["options", i],
+          message: "選択肢は空にできません",
+        });
+      }
+    });
+    if (val.answer_index < 0 || val.answer_index > 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["answer_index"],
+        message: "正解を選択してください",
       });
     }
   });

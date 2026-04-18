@@ -22,19 +22,22 @@ function EditorNewPage() {
   const onSubmit = async (values: QuestionFormValues, mode: SubmitMode) => {
     if (!user) return;
     setSubmitting(true);
+    const isCard = values.question_type === "flashcard";
     const { error } = await (supabase as any).from("questions").insert({
       user_id: user.id,
       category: values.category,
       subcategory: values.subcategory,
       tags: values.tags,
       question_type: values.question_type,
-      question_text: values.question_text,
-      options: values.options,
-      answer_index: values.answer_index,
+      question_text: isCard ? "" : values.question_text,
+      options: isCard ? [] : values.options,
+      answer_index: isCard ? 0 : values.answer_index,
       difficulty: values.difficulty,
       explanation: values.explanation,
       explanation_depth: values.explanation_depth,
       image_url: values.image_url,
+      card_front: isCard ? values.card_front : null,
+      card_back: isCard ? values.card_back : null,
     });
     setSubmitting(false);
     if (error) {

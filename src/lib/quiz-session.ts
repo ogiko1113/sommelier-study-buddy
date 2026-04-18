@@ -27,8 +27,22 @@ export interface ActiveSrs {
   startedAt: string;
 }
 
+export interface CardAnswerRecord {
+  questionId: string;
+  rating: SrsRating;
+}
+
+export interface ActiveCards {
+  questionIds: string[];
+  currentIndex: number;
+  answers: CardAnswerRecord[];
+  mode: "cards";
+  startedAt: string;
+}
+
 const QUIZ_KEY = "wine-master:active-quiz";
 const SRS_KEY = "wine-master:active-srs";
+const CARDS_KEY = "wine-master:active-cards";
 
 function read<T>(key: string): T | null {
   if (typeof window === "undefined") return null;
@@ -61,4 +75,10 @@ export const srsSession = {
   load: () => read<ActiveSrs>(SRS_KEY),
   save: (s: ActiveSrs) => write(SRS_KEY, s),
   clear: () => clear(SRS_KEY),
+};
+
+export const cardsSession = {
+  load: () => read<ActiveCards>(CARDS_KEY),
+  save: (s: ActiveCards) => write(CARDS_KEY, s),
+  clear: () => clear(CARDS_KEY),
 };
