@@ -124,7 +124,6 @@ function EditorEditPage() {
     navigate({ to: "/editor" });
   };
 
-
   const onClearReviewFlag = async () => {
     const { error } = await (supabase as any)
       .from("questions")
