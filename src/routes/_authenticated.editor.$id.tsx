@@ -123,15 +123,7 @@ function EditorEditPage() {
     toast.success("変更を保存しました");
     navigate({ to: "/editor" });
   };
-    setSubmitting(false);
-    if (error) {
-      console.error("update error", error);
-      toast.error(`保存に失敗しました: ${error.message}`);
-      return;
-    }
-    toast.success("変更を保存しました");
-    navigate({ to: "/editor" });
-  };
+
 
   const onClearReviewFlag = async () => {
     const { error } = await (supabase as any)
