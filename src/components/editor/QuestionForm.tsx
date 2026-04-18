@@ -5,18 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { questionSchema, type QuestionFormValues } from "@/lib/question-validation";
+import {
+  questionSchema,
+  type QuestionFormValues,
+  type FormBlank,
+} from "@/lib/question-validation";
 import { ImageUploadField } from "@/components/editor/ImageUploadField";
+import { extractPlaceholderIndices } from "@/lib/fill-blank-judge";
 
 export type SubmitMode = "save" | "save_and_new";
 
 interface QuestionFormProps {
   initial?: Partial<QuestionFormValues>;
-  /** Hide "save and create another" (used in the edit screen). */
   showSaveAndNew?: boolean;
   submitting?: boolean;
   onSubmit: (values: QuestionFormValues, mode: SubmitMode) => Promise<void> | void;
-  /** Optional extra footer slot rendered after the save buttons (used by edit screen). */
   footerSlot?: React.ReactNode;
 }
 
@@ -27,14 +30,25 @@ const EMPTY_VALUES: QuestionFormValues = {
   question_type: "multiple_choice",
   question_text: "",
   options: ["", "", "", ""],
-  answer_index: -1 as unknown as number, // forces user to pick
+  answer_index: -1 as unknown as number,
   difficulty: 1,
   explanation: "",
   explanation_depth: "short",
   image_url: null,
   card_front: null,
   card_back: null,
+  input_mode: null,
+  blanks: [],
 };
+
+function makeBlank(index: number, inputMode: "text" | "select"): FormBlank {
+  return {
+    index,
+    answer: "",
+    accept: [],
+    options: inputMode === "select" ? ["", "", "", ""] : [],
+  };
+}
 
 export function QuestionForm({
   initial,
@@ -50,12 +64,13 @@ export function QuestionForm({
       (initial?.options as [string, string, string, string] | undefined) ??
       EMPTY_VALUES.options,
     tags: initial?.tags ?? EMPTY_VALUES.tags,
+    blanks: initial?.blanks ?? EMPTY_VALUES.blanks,
+    input_mode: initial?.input_mode ?? EMPTY_VALUES.input_mode,
   }));
   const [tagInput, setTagInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [imageUploading, setImageUploading] = useState(false);
 
-  // Reset when `initial` identity changes (e.g. edit page loaded different question)
   useEffect(() => {
     if (!initial) return;
     setValues((prev) => ({
@@ -64,18 +79,26 @@ export function QuestionForm({
       options:
         (initial.options as [string, string, string, string] | undefined) ?? prev.options,
       tags: initial.tags ?? prev.tags,
+      blanks: initial.blanks ?? prev.blanks,
+      input_mode: initial.input_mode ?? prev.input_mode,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
   const subcats = useMemo(() => SUBCATEGORIES[values.category] ?? [], [values.category]);
 
-  // Clear subcategory if not applicable
   useEffect(() => {
     if (subcats.length === 0 && values.subcategory) {
       setValues((v) => ({ ...v, subcategory: null }));
     }
   }, [subcats, values.subcategory]);
+
+  // When switching to fill_blank, ensure input_mode defaults to "text"
+  useEffect(() => {
+    if (values.question_type === "fill_blank" && !values.input_mode) {
+      setValues((v) => ({ ...v, input_mode: "text" }));
+    }
+  }, [values.question_type, values.input_mode]);
 
   const setField = <K extends keyof QuestionFormValues>(
     key: K,
@@ -114,11 +137,84 @@ export function QuestionForm({
   const removeTag = (t: string) =>
     setValues((v) => ({ ...v, tags: v.tags.filter((x) => x !== t) }));
 
+  // -------- Blank helpers --------
+  const setBlank = (i: number, patch: Partial<FormBlank>) => {
+    setValues((v) => {
+      const next = [...v.blanks];
+      next[i] = { ...next[i], ...patch };
+      return { ...v, blanks: next };
+    });
+  };
+  const setBlankOption = (i: number, oi: number, val: string) => {
+    setValues((v) => {
+      const next = [...v.blanks];
+      const opts = [...(next[i].options ?? ["", "", "", ""])];
+      opts[oi] = val;
+      next[i] = { ...next[i], options: opts };
+      return { ...v, blanks: next };
+    });
+  };
+  const removeBlank = (i: number) => {
+    setValues((v) => ({ ...v, blanks: v.blanks.filter((_, j) => j !== i) }));
+  };
+  const addBlank = () => {
+    setValues((v) => {
+      const used = new Set(v.blanks.map((b) => b.index));
+      let n = 1;
+      while (used.has(n)) n++;
+      const mode = v.input_mode ?? "text";
+      return { ...v, blanks: [...v.blanks, makeBlank(n, mode)] };
+    });
+  };
+  const syncBlanksFromText = () => {
+    setValues((v) => {
+      const indices = extractPlaceholderIndices(v.question_text);
+      const mode = v.input_mode ?? "text";
+      const byIdx = new Map(v.blanks.map((b) => [b.index, b]));
+      const next: FormBlank[] = indices.map((idx) => {
+        const existing = byIdx.get(idx);
+        if (existing) {
+          // Adjust options length to mode
+          if (mode === "select" && existing.options.length !== 4) {
+            return { ...existing, options: ["", "", "", ""] };
+          }
+          if (mode === "text" && existing.options.length !== 0) {
+            return { ...existing, options: [] };
+          }
+          return existing;
+        }
+        return makeBlank(idx, mode);
+      });
+      // Preserve orphans (blanks not in text) so user can decide
+      const inText = new Set(indices);
+      const orphans = v.blanks.filter((b) => !inText.has(b.index));
+      return { ...v, blanks: [...next, ...orphans] };
+    });
+  };
+
+  // When input_mode toggles, normalize blank.options length
+  const onInputModeChange = (mode: "text" | "select") => {
+    setValues((v) => ({
+      ...v,
+      input_mode: mode,
+      blanks: v.blanks.map((b) =>
+        mode === "select"
+          ? { ...b, options: b.options.length === 4 ? b.options : ["", "", "", ""] }
+          : { ...b, options: [] },
+      ),
+    }));
+  };
+
+  const placeholdersInText = useMemo(
+    () => new Set(extractPlaceholderIndices(values.question_text)),
+    [values.question_text],
+  );
+
   const submit = async (mode: SubmitMode) => {
     const candidate: QuestionFormValues = {
       ...values,
-      // normalize subcategory to null when blank
-      subcategory: values.subcategory && values.subcategory.length > 0 ? values.subcategory : null,
+      subcategory:
+        values.subcategory && values.subcategory.length > 0 ? values.subcategory : null,
     };
     const result = questionSchema.safeParse(candidate);
     if (!result.success) {
@@ -137,16 +233,18 @@ export function QuestionForm({
   const fieldError = (key: string) =>
     errors[key] ? <p className="text-xs text-destructive">{errors[key]}</p> : null;
 
+  const isCard = values.question_type === "flashcard";
+  const isFill = values.question_type === "fill_blank";
+  const isMC = values.question_type === "multiple_choice";
+
   return (
     <div className="space-y-6">
-      {/* Image */}
       <ImageUploadField
         value={values.image_url ?? null}
         onChange={(url) => setField("image_url", url)}
         onUploadingChange={setImageUploading}
       />
 
-      {/* Category */}
       <div className="space-y-2">
         <Label className="text-base">カテゴリ <span className="text-destructive">*</span></Label>
         <select
@@ -163,7 +261,6 @@ export function QuestionForm({
         {fieldError("category")}
       </div>
 
-      {/* Subcategory (conditional) */}
       {subcats.length > 0 && (
         <div className="space-y-2">
           <Label className="text-base">サブカテゴリ</Label>
@@ -184,7 +281,6 @@ export function QuestionForm({
         </div>
       )}
 
-      {/* Tags */}
       <div className="space-y-2">
         <Label className="text-base">
           タグ <span className="text-destructive">*</span>
@@ -260,7 +356,7 @@ export function QuestionForm({
             type="button"
             onClick={() => setField("question_type", "multiple_choice")}
             className={`h-10 flex-1 rounded-md border text-sm font-medium transition-colors ${
-              values.question_type === "multiple_choice"
+              isMC
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-input bg-card text-foreground"
             }`}
@@ -271,7 +367,7 @@ export function QuestionForm({
             type="button"
             onClick={() => setField("question_type", "flashcard")}
             className={`h-10 flex-1 rounded-md border text-sm font-medium transition-colors ${
-              values.question_type === "flashcard"
+              isCard
                 ? "border-primary bg-primary text-primary-foreground"
                 : "border-input bg-card text-foreground"
             }`}
@@ -280,15 +376,19 @@ export function QuestionForm({
           </button>
           <button
             type="button"
-            disabled
-            className="h-10 flex-1 rounded-md border border-input bg-muted text-sm font-medium text-muted-foreground"
+            onClick={() => setField("question_type", "fill_blank")}
+            className={`h-10 flex-1 rounded-md border text-sm font-medium transition-colors ${
+              isFill
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-input bg-card text-foreground"
+            }`}
           >
             穴埋め
           </button>
         </div>
       </div>
 
-      {values.question_type === "flashcard" ? (
+      {isCard && (
         <>
           <div className="space-y-2">
             <Label className="text-base">
@@ -317,9 +417,161 @@ export function QuestionForm({
             {fieldError("card_back")}
           </div>
         </>
-      ) : (
+      )}
+
+      {isFill && (
         <>
-          {/* Question text */}
+          <div className="space-y-2">
+            <Label className="text-base">
+              入力方式 <span className="text-destructive">*</span>
+            </Label>
+            <div className="flex gap-2">
+              {(["text", "select"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => onInputModeChange(m)}
+                  className={`h-12 flex-1 rounded-md border text-base transition-colors ${
+                    values.input_mode === m
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-card text-foreground"
+                  }`}
+                >
+                  {m === "text" ? "記入式" : "選択式"}
+                </button>
+              ))}
+            </div>
+            {fieldError("input_mode")}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base">
+              問題文 <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              value={values.question_text}
+              onChange={(e) => setField("question_text", e.target.value)}
+              rows={4}
+              className="text-base"
+              placeholder="例: {{1}}地方の{{2}}村は、{{3}}品種で造られる。"
+            />
+            <p className="text-xs text-muted-foreground">
+              空欄は <code className="rounded bg-muted px-1">{"{{1}}"}</code>,{" "}
+              <code className="rounded bg-muted px-1">{"{{2}}"}</code>{" "}
+              のように書きます。番号は任意で、下の空欄リストと対応します。
+            </p>
+            {fieldError("question_text")}
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-base">空欄リスト</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={syncBlanksFromText}
+                >
+                  問題文から同期
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addBlank}>
+                  + 追加
+                </Button>
+              </div>
+            </div>
+            {values.blanks.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                問題文に {"{{1}}"} を書いてから「同期」を押してください。
+              </p>
+            )}
+            <div className="space-y-3">
+              {values.blanks.map((b, i) => {
+                const orphan = !placeholdersInText.has(b.index);
+                return (
+                  <div
+                    key={i}
+                    className={`space-y-2 rounded-lg border p-3 ${
+                      orphan ? "border-destructive/40 bg-destructive/5" : "border-input bg-card"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {`{{${b.index}}}`}
+                        {orphan && (
+                          <span className="ml-2 text-xs text-destructive">
+                            ⚠ 問題文に存在しません
+                          </span>
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeBlank(i)}
+                        className="text-xs text-muted-foreground hover:text-destructive"
+                        aria-label={`空欄 ${b.index} を削除`}
+                      >
+                        🗑 削除
+                      </button>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">
+                        正解 <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        value={b.answer}
+                        onChange={(e) => setBlank(i, { answer: e.target.value })}
+                        className="text-sm"
+                      />
+                      {fieldError(`blanks.${i}.answer`)}
+                    </div>
+                    {values.input_mode === "text" && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">許容回答 (カンマ区切り、任意)</Label>
+                        <Input
+                          value={(b.accept ?? []).join(", ")}
+                          onChange={(e) =>
+                            setBlank(i, {
+                              accept: e.target.value
+                                .split(",")
+                                .map((s) => s.trim())
+                                .filter((s) => s.length > 0),
+                            })
+                          }
+                          placeholder="例: 五, 5"
+                          className="text-sm"
+                        />
+                      </div>
+                    )}
+                    {values.input_mode === "select" && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">
+                          選択肢 (4つ必須、正解を含むこと)
+                        </Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[0, 1, 2, 3].map((oi) => (
+                            <Input
+                              key={oi}
+                              value={(b.options ?? [])[oi] ?? ""}
+                              onChange={(e) => setBlankOption(i, oi, e.target.value)}
+                              placeholder={`選択肢 ${oi + 1}`}
+                              className="text-sm"
+                            />
+                          ))}
+                        </div>
+                        {fieldError(`blanks.${i}.options`)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {fieldError("blanks")}
+          </div>
+        </>
+      )}
+
+      {isMC && (
+        <>
           <div className="space-y-2">
             <Label className="text-base">
               問題文 <span className="text-destructive">*</span>
@@ -333,7 +585,6 @@ export function QuestionForm({
             {fieldError("question_text")}
           </div>
 
-          {/* Options */}
           <div className="space-y-2">
             <Label className="text-base">
               選択肢 <span className="text-destructive">*</span>
@@ -369,7 +620,6 @@ export function QuestionForm({
         </>
       )}
 
-      {/* Difficulty */}
       <div className="space-y-2">
         <Label className="text-base">
           難易度 <span className="text-destructive">*</span>
@@ -392,11 +642,10 @@ export function QuestionForm({
         </div>
       </div>
 
-      {/* Explanation */}
       <div className="space-y-2">
         <Label className="text-base">
           解説{" "}
-          {values.question_type === "flashcard" ? (
+          {isCard ? (
             <span className="ml-2 text-xs font-normal text-muted-foreground">(任意)</span>
           ) : (
             <span className="text-destructive">*</span>
@@ -411,7 +660,6 @@ export function QuestionForm({
         {fieldError("explanation")}
       </div>
 
-      {/* Explanation depth */}
       <div className="space-y-2">
         <Label className="text-base">
           解説の深さ <span className="text-destructive">*</span>
