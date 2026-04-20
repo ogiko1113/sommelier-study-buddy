@@ -169,6 +169,26 @@ function QuizSetupPage() {
         )}
 
         <div className="space-y-2">
+          <Label className="text-base">問題形式</Label>
+          <div className="flex gap-2">
+            {QUESTION_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setQuestionType(opt.value)}
+                className={`h-12 flex-1 rounded-md border text-base transition-colors ${
+                  questionType === opt.value
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-card text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <Label className="text-base">難易度</Label>
           <div className="flex gap-2">
             {[1, 2, 3].map((d) => (
