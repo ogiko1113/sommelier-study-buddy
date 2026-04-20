@@ -17,6 +17,13 @@ export const Route = createFileRoute("/_authenticated/quiz/setup")({
 });
 
 type Order = "random" | "unanswered" | "wrong";
+type QuestionType = "multiple_choice" | "fill_blank" | "flashcard";
+
+const QUESTION_TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
+  { value: "multiple_choice", label: "クイズ" },
+  { value: "fill_blank", label: "穴埋め" },
+  { value: "flashcard", label: "カード" },
+];
 
 function QuizSetupPage() {
   const navigate = useNavigate();
@@ -29,8 +36,9 @@ function QuizSetupPage() {
   const [subcategory, setSubcategory] = useState<string>("");
   const [difficulties, setDifficulties] = useState<number[]>([1, 2, 3]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [count, setCount] = useState<1 | 10>(10);
+  const [count, setCount] = useState<1 | 10 | 20>(10);
   const [order, setOrder] = useState<Order>("random");
+  const [questionType, setQuestionType] = useState<QuestionType>("multiple_choice");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,6 +70,7 @@ function QuizSetupPage() {
       .from("questions")
       .select("id, correct_count, wrong_count")
       .eq("category", category)
+      .eq("question_type", questionType)
       .eq("is_archived", false)
       .in("difficulty", difficulties);
 
@@ -160,6 +169,26 @@ function QuizSetupPage() {
         )}
 
         <div className="space-y-2">
+          <Label className="text-base">問題形式</Label>
+          <div className="flex gap-2">
+            {QUESTION_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setQuestionType(opt.value)}
+                className={`h-12 flex-1 rounded-md border text-base transition-colors ${
+                  questionType === opt.value
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-card text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
           <Label className="text-base">難易度</Label>
           <div className="flex gap-2">
             {[1, 2, 3].map((d) => (
@@ -202,11 +231,11 @@ function QuizSetupPage() {
         <div className="space-y-2">
           <Label className="text-base">問題数</Label>
           <div className="flex gap-2">
-            {[1, 10].map((n) => (
+            {[1, 10, 20].map((n) => (
               <button
                 key={n}
                 type="button"
-                onClick={() => setCount(n as 1 | 10)}
+                onClick={() => setCount(n as 1 | 10 | 20)}
                 className={`h-12 flex-1 rounded-md border text-base transition-colors ${
                   count === n
                     ? "border-primary bg-primary text-primary-foreground"
