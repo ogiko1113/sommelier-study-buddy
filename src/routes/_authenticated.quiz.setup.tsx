@@ -36,8 +36,9 @@ function QuizSetupPage() {
   const [subcategory, setSubcategory] = useState<string>("");
   const [difficulties, setDifficulties] = useState<number[]>([1, 2, 3]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [count, setCount] = useState<1 | 10>(10);
+  const [count, setCount] = useState<1 | 10 | 20>(10);
   const [order, setOrder] = useState<Order>("random");
+  const [questionType, setQuestionType] = useState<QuestionType>("multiple_choice");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
