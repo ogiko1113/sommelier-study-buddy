@@ -231,11 +231,11 @@ function QuizSetupPage() {
         <div className="space-y-2">
           <Label className="text-base">問題数</Label>
           <div className="flex gap-2">
-            {[1, 10].map((n) => (
+            {[1, 10, 20].map((n) => (
               <button
                 key={n}
                 type="button"
-                onClick={() => setCount(n as 1 | 10)}
+                onClick={() => setCount(n as 1 | 10 | 20)}
                 className={`h-12 flex-1 rounded-md border text-base transition-colors ${
                   count === n
                     ? "border-primary bg-primary text-primary-foreground"
