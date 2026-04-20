@@ -605,9 +605,7 @@ function HomePage() {
                       axisLine={false}
                     />
                     <Tooltip
-                      formatter={(v: number | null) =>
-                        v === null ? "—" : `${v}%`
-                      }
+                      formatter={(v) => (v === null ? "—" : `${v}%`)}
                       labelStyle={{ fontSize: 12 }}
                       contentStyle={{
                         background: "hsl(var(--card))",
