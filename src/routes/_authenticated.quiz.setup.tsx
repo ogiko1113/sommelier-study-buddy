@@ -17,6 +17,13 @@ export const Route = createFileRoute("/_authenticated/quiz/setup")({
 });
 
 type Order = "random" | "unanswered" | "wrong";
+type QuestionType = "multiple_choice" | "fill_blank" | "flashcard";
+
+const QUESTION_TYPE_OPTIONS: { value: QuestionType; label: string }[] = [
+  { value: "multiple_choice", label: "クイズ" },
+  { value: "fill_blank", label: "穴埋め" },
+  { value: "flashcard", label: "カード" },
+];
 
 function QuizSetupPage() {
   const navigate = useNavigate();
