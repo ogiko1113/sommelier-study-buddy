@@ -70,6 +70,7 @@ function QuizSetupPage() {
       .from("questions")
       .select("id, correct_count, wrong_count")
       .eq("category", category)
+      .eq("question_type", questionType)
       .eq("is_archived", false)
       .in("difficulty", difficulties);
 
