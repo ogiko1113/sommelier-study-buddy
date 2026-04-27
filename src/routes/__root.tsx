@@ -34,6 +34,14 @@ export const Route = createRootRoute({
       { title: "Wine Master" },
       { name: "description", content: "JSAワインエキスパート受験対策クイズアプリ" },
       { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Wine Master" },
+      { name: "twitter:title", content: "Wine Master" },
+      { property: "og:description", content: "JSAワインエキスパート受験対策クイズアプリ" },
+      { name: "twitter:description", content: "JSAワインエキスパート受験対策クイズアプリ" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/82e0f542-6638-4774-bf79-2f79d8cd2fb4" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/82e0f542-6638-4774-bf79-2f79d8cd2fb4" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       {
