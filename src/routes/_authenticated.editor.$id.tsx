@@ -68,7 +68,8 @@ function EditorEditPage() {
       options: Array.isArray(data.options)
         ? (data.options as [string, string, string, string])
         : ["", "", "", ""],
-      answer_index: data.answer_index,
+      answer_index:
+        typeof data.answer_index === "number" ? data.answer_index : 0,
       difficulty: data.difficulty,
       explanation: data.explanation,
       explanation_depth: data.explanation_depth,
