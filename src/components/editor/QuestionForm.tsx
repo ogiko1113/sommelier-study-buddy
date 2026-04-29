@@ -85,6 +85,10 @@ export function QuestionForm({
     tags: initial?.tags ?? EMPTY_VALUES.tags,
     blanks: initial?.blanks ?? EMPTY_VALUES.blanks,
     input_mode: initial?.input_mode ?? EMPTY_VALUES.input_mode,
+    answer_index:
+      typeof initial?.answer_index === "number"
+        ? initial.answer_index
+        : EMPTY_VALUES.answer_index,
   }));
   const [tagInput, setTagInput] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
