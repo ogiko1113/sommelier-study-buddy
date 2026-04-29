@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { CATEGORIES, SUBCATEGORIES } from "@/constants/categories";
 import { TAGS } from "@/constants/tags";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,24 @@ import {
 } from "@/lib/question-validation";
 import { ImageUploadField } from "@/components/editor/ImageUploadField";
 import { extractPlaceholderIndices } from "@/lib/fill-blank-judge";
+
+const FIELD_LABELS: Record<string, string> = {
+  category: "カテゴリ",
+  subcategory: "サブカテゴリ",
+  tags: "タグ",
+  question_type: "問題形式",
+  question_text: "問題文",
+  options: "選択肢",
+  answer_index: "正解",
+  difficulty: "難易度",
+  explanation: "解説",
+  explanation_depth: "解説の深さ",
+  image_url: "画像",
+  card_front: "表面",
+  card_back: "裏面",
+  input_mode: "入力方式",
+  blanks: "空欄",
+};
 
 export type SubmitMode = "save" | "save_and_new";
 
@@ -224,6 +243,21 @@ export function QuestionForm({
         if (!fieldErrors[key]) fieldErrors[key] = issue.message;
       }
       setErrors(fieldErrors);
+      // Surface the first error as a toast so the user understands why save did nothing.
+      const firstIssue = result.error.issues[0];
+      const firstKey = firstIssue.path.join(".");
+      const topKey = String(firstIssue.path[0] ?? "");
+      const label = FIELD_LABELS[topKey] ?? topKey;
+      toast.error(`入力エラー: ${label} — ${firstIssue.message}`);
+      // Scroll the first invalid field into view if possible.
+      if (typeof document !== "undefined") {
+        const el =
+          document.querySelector(`[data-field-error="${firstKey}"]`) ??
+          document.querySelector(`[data-field-error="${topKey}"]`);
+        if (el && "scrollIntoView" in el) {
+          (el as HTMLElement).scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
       return;
     }
     setErrors({});
