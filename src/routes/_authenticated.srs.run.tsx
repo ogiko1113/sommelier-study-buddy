@@ -42,6 +42,7 @@ function SrsRunPage() {
   const [revealed, setRevealed] = useState(false);
   const [starred, setStarred] = useState(false);
   const [fbInputs, setFbInputs] = useState<Record<number, string>>({});
+  const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
     if (session || !user) return;
