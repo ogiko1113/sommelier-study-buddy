@@ -27,6 +27,8 @@ interface Question {
   image_url: string | null;
   input_mode: "text" | "select" | null;
   blanks: Blank[];
+  card_front: string | null;
+  card_back: string | null;
 }
 
 function SrsRunPage() {
