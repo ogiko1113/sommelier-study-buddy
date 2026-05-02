@@ -27,6 +27,8 @@ interface Question {
   image_url: string | null;
   input_mode: "text" | "select" | null;
   blanks: Blank[];
+  card_front: string | null;
+  card_back: string | null;
 }
 
 function SrsRunPage() {
@@ -40,6 +42,7 @@ function SrsRunPage() {
   const [revealed, setRevealed] = useState(false);
   const [starred, setStarred] = useState(false);
   const [fbInputs, setFbInputs] = useState<Record<number, string>>({});
+  const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
     if (session || !user) return;
@@ -97,11 +100,12 @@ function SrsRunPage() {
     setSelected(null);
     setRevealed(false);
     setFbInputs({});
+    setFlipped(false);
     (async () => {
       const { data, error } = await (supabase as any)
         .from("questions")
         .select(
-          "id, question_type, question_text, options, answer_index, explanation, is_starred, srs_stage, image_url, input_mode, blanks",
+          "id, question_type, question_text, options, answer_index, explanation, is_starred, srs_stage, image_url, input_mode, blanks, card_front, card_back",
         )
         .eq("id", qid)
         .single();
@@ -155,6 +159,7 @@ function SrsRunPage() {
   const progress = session.currentIndex + 1;
 
   const isFill = question?.question_type === "fill_blank";
+  const isCard = question?.question_type === "flashcard";
 
   const onSelect = (idx: number) => {
     if (revealed || !question) return;
@@ -169,7 +174,7 @@ function SrsRunPage() {
 
   const onRate = async (rating: SrsRating) => {
     if (!question || !user) return;
-    if (!isFill && selected === null) return;
+    if (!isFill && !isCard && selected === null) return;
     const isCorrect = rating === "perfect";
     const update = applySrsRating(question.srs_stage, rating);
 
@@ -177,10 +182,12 @@ function SrsRunPage() {
       user_id: user.id,
       question_id: question.id,
       is_correct: isCorrect,
-      selected_index: isFill ? null : selected,
+      selected_index: isFill || isCard ? null : selected,
       selected_text: isFill
         ? JSON.stringify(fbInputs)
-        : (question.options[selected!] ?? null),
+        : isCard
+          ? null
+          : (question.options[selected!] ?? null),
       srs_rating: rating,
       mode: "srs_review",
     });
@@ -196,7 +203,7 @@ function SrsRunPage() {
 
     const newAnswer: SrsAnswerRecord = {
       questionId: question.id,
-      selectedIndex: isFill ? -1 : (selected ?? -1),
+      selectedIndex: isFill || isCard ? -1 : (selected ?? -1),
       isCorrect,
       rating,
     };
@@ -243,7 +250,34 @@ function SrsRunPage() {
       <main className="mx-auto max-w-md space-y-6 px-5 py-6">
         {question.image_url && <QuestionImage url={question.image_url} />}
 
-        {isFill ? (
+        {isCard ? (
+          <button
+            type="button"
+            onClick={() => {
+              setFlipped((f) => !f);
+              if (!flipped) setRevealed(true);
+            }}
+            className="block w-full"
+            aria-label={flipped ? "表面に戻す" : "裏面を見る"}
+          >
+            <div
+              className={`min-h-[240px] rounded-2xl border-2 p-6 text-left shadow-sm transition-colors ${
+                flipped
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-input bg-card hover:bg-accent/40"
+              }`}
+            >
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {flipped ? "裏面" : "表面 — タップで裏面を表示"}
+              </p>
+              <p className="text-xl leading-relaxed text-foreground whitespace-pre-wrap">
+                {flipped
+                  ? (question.card_back ?? "(裏面なし)")
+                  : (question.card_front ?? "(表面なし)")}
+              </p>
+            </div>
+          </button>
+        ) : isFill ? (
           <>
             <FillBlankRunner
               questionText={question.question_text}
