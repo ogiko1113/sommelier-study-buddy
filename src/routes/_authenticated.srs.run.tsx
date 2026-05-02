@@ -159,6 +159,7 @@ function SrsRunPage() {
   const progress = session.currentIndex + 1;
 
   const isFill = question?.question_type === "fill_blank";
+  const isCard = question?.question_type === "flashcard";
 
   const onSelect = (idx: number) => {
     if (revealed || !question) return;
@@ -173,7 +174,7 @@ function SrsRunPage() {
 
   const onRate = async (rating: SrsRating) => {
     if (!question || !user) return;
-    if (!isFill && selected === null) return;
+    if (!isFill && !isCard && selected === null) return;
     const isCorrect = rating === "perfect";
     const update = applySrsRating(question.srs_stage, rating);
 
@@ -181,10 +182,12 @@ function SrsRunPage() {
       user_id: user.id,
       question_id: question.id,
       is_correct: isCorrect,
-      selected_index: isFill ? null : selected,
+      selected_index: isFill || isCard ? null : selected,
       selected_text: isFill
         ? JSON.stringify(fbInputs)
-        : (question.options[selected!] ?? null),
+        : isCard
+          ? null
+          : (question.options[selected!] ?? null),
       srs_rating: rating,
       mode: "srs_review",
     });
