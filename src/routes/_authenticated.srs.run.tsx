@@ -100,11 +100,12 @@ function SrsRunPage() {
     setSelected(null);
     setRevealed(false);
     setFbInputs({});
+    setFlipped(false);
     (async () => {
       const { data, error } = await (supabase as any)
         .from("questions")
         .select(
-          "id, question_type, question_text, options, answer_index, explanation, is_starred, srs_stage, image_url, input_mode, blanks",
+          "id, question_type, question_text, options, answer_index, explanation, is_starred, srs_stage, image_url, input_mode, blanks, card_front, card_back",
         )
         .eq("id", qid)
         .single();
