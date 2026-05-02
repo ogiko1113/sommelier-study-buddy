@@ -250,7 +250,34 @@ function SrsRunPage() {
       <main className="mx-auto max-w-md space-y-6 px-5 py-6">
         {question.image_url && <QuestionImage url={question.image_url} />}
 
-        {isFill ? (
+        {isCard ? (
+          <button
+            type="button"
+            onClick={() => {
+              setFlipped((f) => !f);
+              if (!flipped) setRevealed(true);
+            }}
+            className="block w-full"
+            aria-label={flipped ? "表面に戻す" : "裏面を見る"}
+          >
+            <div
+              className={`min-h-[240px] rounded-2xl border-2 p-6 text-left shadow-sm transition-colors ${
+                flipped
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-input bg-card hover:bg-accent/40"
+              }`}
+            >
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {flipped ? "裏面" : "表面 — タップで裏面を表示"}
+              </p>
+              <p className="text-xl leading-relaxed text-foreground whitespace-pre-wrap">
+                {flipped
+                  ? (question.card_back ?? "(裏面なし)")
+                  : (question.card_front ?? "(表面なし)")}
+              </p>
+            </div>
+          </button>
+        ) : isFill ? (
           <>
             <FillBlankRunner
               questionText={question.question_text}
