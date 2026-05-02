@@ -203,7 +203,7 @@ function SrsRunPage() {
 
     const newAnswer: SrsAnswerRecord = {
       questionId: question.id,
-      selectedIndex: isFill ? -1 : (selected ?? -1),
+      selectedIndex: isFill || isCard ? -1 : (selected ?? -1),
       isCorrect,
       rating,
     };
