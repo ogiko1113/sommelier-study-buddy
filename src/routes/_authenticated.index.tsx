@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { getDailyGoal, getExamDateKey } from "@/lib/user-settings";
 import {
   LineChart,
   Line,
@@ -19,9 +20,8 @@ export const Route = createFileRoute("/_authenticated/")({
 
 // ---- Constants -------------------------------------------------------------
 
-const EXAM_DATE = new Date("2026-07-15T00:00:00+09:00");
-const DAILY_GOAL = 50;
 const EXPANDABLE_CATEGORIES = new Set(["フランス", "イタリア"]);
+
 
 // ---- Helpers ---------------------------------------------------------------
 
@@ -44,14 +44,14 @@ function addDays(d: Date, n: number): Date {
   return next;
 }
 
-function daysUntilExam(): number {
+function daysUntilExam(examKey: string): number {
   const todayKey = jstDateKey(new Date());
   const todayJst = jstMidnightUtc(todayKey);
-  const examKey = jstDateKey(EXAM_DATE);
   const examJst = jstMidnightUtc(examKey);
   const ms = examJst.getTime() - todayJst.getTime();
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
+
 
 function computeStreak(keys: Set<string>): number {
   const todayKey = jstDateKey(new Date());
@@ -424,7 +424,9 @@ function HomePage() {
     });
   };
 
-  const examDays = useMemo(() => daysUntilExam(), []);
+  const examDays = useMemo(() => daysUntilExam(getExamDateKey()), []);
+  const dailyGoal = useMemo(() => getDailyGoal(), []);
+
   const trendAllNull =
     trend !== null && trend.every((p) => p.accuracy === null);
 
@@ -432,13 +434,22 @@ function HomePage() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b bg-card px-5 py-4">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">Wine Master</h1>
-        <button
-          onClick={onLogout}
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ログアウト
-        </button>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/settings"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            設定
+          </Link>
+          <button
+            onClick={onLogout}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ログアウト
+          </button>
+        </div>
       </header>
+
 
       <main className="mx-auto max-w-md space-y-6 px-5 py-8">
         {/* 1. Exam countdown */}
@@ -545,16 +556,17 @@ function HomePage() {
                     {todayCount}
                   </span>
                   <span className="text-muted-foreground">
-                    問 / 目標 {DAILY_GOAL}問
+                    問 / 目標 {dailyGoal}問
                   </span>
                 </p>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full bg-primary transition-all"
                     style={{
-                      width: `${Math.min((todayCount / DAILY_GOAL) * 100, 100)}%`,
+                      width: `${Math.min((todayCount / dailyGoal) * 100, 100)}%`,
                     }}
                   />
+
                 </div>
               </div>
               <div className="border-l pl-4">
