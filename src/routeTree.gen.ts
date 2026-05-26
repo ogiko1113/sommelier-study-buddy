@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated.settings'
 import { Route as AuthenticatedEditorRouteImport } from './routes/_authenticated.editor'
 import { Route as AuthenticatedDrillRouteImport } from './routes/_authenticated.drill'
 import { Route as AuthenticatedCardsRouteImport } from './routes/_authenticated.cards'
@@ -40,6 +41,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEditorRoute = AuthenticatedEditorRouteImport.update({
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/cards': typeof AuthenticatedCardsRouteWithChildren
   '/drill': typeof AuthenticatedDrillRoute
   '/editor': typeof AuthenticatedEditorRouteWithChildren
+  '/settings': typeof AuthenticatedSettingsRoute
   '/cards/run': typeof AuthenticatedCardsRunRoute
   '/cards/setup': typeof AuthenticatedCardsSetupRoute
   '/cards/summary': typeof AuthenticatedCardsSummaryRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/cards': typeof AuthenticatedCardsRouteWithChildren
   '/drill': typeof AuthenticatedDrillRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
   '/cards/run': typeof AuthenticatedCardsRunRoute
   '/cards/setup': typeof AuthenticatedCardsSetupRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/_authenticated/cards': typeof AuthenticatedCardsRouteWithChildren
   '/_authenticated/drill': typeof AuthenticatedDrillRoute
   '/_authenticated/editor': typeof AuthenticatedEditorRouteWithChildren
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cards/run': typeof AuthenticatedCardsRunRoute
   '/_authenticated/cards/setup': typeof AuthenticatedCardsSetupRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/cards'
     | '/drill'
     | '/editor'
+    | '/settings'
     | '/cards/run'
     | '/cards/setup'
     | '/cards/summary'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/cards'
     | '/drill'
+    | '/settings'
     | '/'
     | '/cards/run'
     | '/cards/setup'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cards'
     | '/_authenticated/drill'
     | '/_authenticated/editor'
+    | '/_authenticated/settings'
     | '/_authenticated/'
     | '/_authenticated/cards/run'
     | '/_authenticated/cards/setup'
@@ -266,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/editor': {
@@ -412,6 +431,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCardsRoute: typeof AuthenticatedCardsRouteWithChildren
   AuthenticatedDrillRoute: typeof AuthenticatedDrillRoute
   AuthenticatedEditorRoute: typeof AuthenticatedEditorRouteWithChildren
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedQuizRunRoute: typeof AuthenticatedQuizRunRoute
   AuthenticatedQuizSetupRoute: typeof AuthenticatedQuizSetupRoute
@@ -424,6 +444,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCardsRoute: AuthenticatedCardsRouteWithChildren,
   AuthenticatedDrillRoute: AuthenticatedDrillRoute,
   AuthenticatedEditorRoute: AuthenticatedEditorRouteWithChildren,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedQuizRunRoute: AuthenticatedQuizRunRoute,
   AuthenticatedQuizSetupRoute: AuthenticatedQuizSetupRoute,
@@ -443,3 +464,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
