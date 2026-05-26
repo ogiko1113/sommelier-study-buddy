@@ -434,13 +434,22 @@ function HomePage() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b bg-card px-5 py-4">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">Wine Master</h1>
-        <button
-          onClick={onLogout}
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ログアウト
-        </button>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/settings"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            設定
+          </Link>
+          <button
+            onClick={onLogout}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ログアウト
+          </button>
+        </div>
       </header>
+
 
       <main className="mx-auto max-w-md space-y-6 px-5 py-8">
         {/* 1. Exam countdown */}
