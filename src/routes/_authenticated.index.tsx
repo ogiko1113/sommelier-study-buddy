@@ -424,7 +424,9 @@ function HomePage() {
     });
   };
 
-  const examDays = useMemo(() => daysUntilExam(), []);
+  const examDays = useMemo(() => daysUntilExam(getExamDateKey()), []);
+  const dailyGoal = useMemo(() => getDailyGoal(), []);
+
   const trendAllNull =
     trend !== null && trend.every((p) => p.accuracy === null);
 
