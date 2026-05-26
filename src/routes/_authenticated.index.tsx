@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
+import { getDailyGoal, getExamDateKey } from "@/lib/user-settings";
 import {
   LineChart,
   Line,
@@ -19,9 +20,8 @@ export const Route = createFileRoute("/_authenticated/")({
 
 // ---- Constants -------------------------------------------------------------
 
-const EXAM_DATE = new Date("2026-07-15T00:00:00+09:00");
-const DAILY_GOAL = 50;
 const EXPANDABLE_CATEGORIES = new Set(["フランス", "イタリア"]);
+
 
 // ---- Helpers ---------------------------------------------------------------
 
