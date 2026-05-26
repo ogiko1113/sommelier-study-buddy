@@ -44,14 +44,14 @@ function addDays(d: Date, n: number): Date {
   return next;
 }
 
-function daysUntilExam(): number {
+function daysUntilExam(examKey: string): number {
   const todayKey = jstDateKey(new Date());
   const todayJst = jstMidnightUtc(todayKey);
-  const examKey = jstDateKey(EXAM_DATE);
   const examJst = jstMidnightUtc(examKey);
   const ms = examJst.getTime() - todayJst.getTime();
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
+
 
 function computeStreak(keys: Set<string>): number {
   const todayKey = jstDateKey(new Date());
