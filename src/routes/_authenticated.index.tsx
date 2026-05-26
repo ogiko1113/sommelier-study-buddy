@@ -547,16 +547,17 @@ function HomePage() {
                     {todayCount}
                   </span>
                   <span className="text-muted-foreground">
-                    問 / 目標 {DAILY_GOAL}問
+                    問 / 目標 {dailyGoal}問
                   </span>
                 </p>
                 <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full bg-primary transition-all"
                     style={{
-                      width: `${Math.min((todayCount / DAILY_GOAL) * 100, 100)}%`,
+                      width: `${Math.min((todayCount / dailyGoal) * 100, 100)}%`,
                     }}
                   />
+
                 </div>
               </div>
               <div className="border-l pl-4">
